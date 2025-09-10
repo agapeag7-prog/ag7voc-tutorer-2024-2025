@@ -1,0 +1,274 @@
+[
+  [
+    "montre l'historique",
+    "historique"
+  ],
+  [
+    "mets la machine à veille",
+    "shutdown"
+  ],
+  [
+    "ouvre chrome",
+    "launch_app"
+  ],
+  [
+    "ouvre bloc-note",
+    "launch_app"
+  ],
+  [
+    "cherche youtube.com",
+    "search_web"
+  ],
+  [
+    "le dossier bureau",
+    "rename_file"
+  ],
+  [
+    "mets un événement réunion à 18h juste",
+    "add_event"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
+  ],
+  [
+    "email à agapé gmail.com",
+    "add_event"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
+  ],
+  [
+    "ouvre explorateur des fichiers",
+    "historique"
+  ],
+  [
+    "montre-moi l'historique",
+    "historique"
+  ],
+  [
+    "cherche Google",
+    "search_web"
+  ],
+  [
+    "envoie email",
+    "send_email"
+  ],
+  [
+    "affiche mes événements",
+    "show_events"
+  ],
+  [
+    "lister les lecteurs",
+    "list_drives"
+  ],
+  [
+    "ouvre calque",
+    "launch_app"
+  ],
+  [
+    "lis les fichiers connaissance txt",
+    "list_files"
+  ],
+  [
+    "ouvre Excel",
+    "launch_app"
+  ],
+  [
+    "lis les fichiers connaissance",
+    "list_files"
+  ],
+  [
+    "ouvre calculatrice",
+    "launch_app"
+  ],
+  [
+    "liste des fichiers",
+    "list_files"
+  ],
+  [
+    "place des fichiers connaissance",
+    "historique"
+  ],
+  [
+    "renommer",
+    "rename_file"
+  ],
+  [
+    "transférer connaissance",
+    "move_file"
+  ],
+  [
+    "connaissance vers bureau",
+    "move_file"
+  ],
+  [
+    "verrouille l'ordinateur",
+    "lock"
+  ],
+  [
+    "cherche sur Youtube voiture",
+    "search_web"
+  ],
+  [
+    "cherche les fichiers",
+    "list_files"
+  ],
+  [
+    "ouvre Excel",
+    "launch_app"
+  ],
+  [
+    "demande de précision",
+    "show_events"
+  ],
+  [
+    "devine l'hiver",
+    "delete_event"
+  ],
+  [
+    "trouve la France",
+    "move_file"
+  ],
+  [
+    "cherche Vladimir Poutine",
+    "search_web"
+  ],
+  [
+    "ouvre pence",
+    "launch_app"
+  ],
+  [
+    "ouvre paint",
+    "launch_app"
+  ],
+  [
+    "cherche plusieurs sites de code",
+    "search_web"
+  ],
+  [
+    "ajoute un événement parler à 3h15",
+    "add_event"
+  ],
+  [
+    "lis-moi la dernière commande",
+    "get_date"
+  ],
+  [
+    "dis-moi la dernière commande",
+    "get_date"
+  ],
+  [
+    "cherche sur internet Visual Studio code",
+    "search_web"
+  ],
+  [
+    "cherche",
+    "search_web"
+  ],
+  [
+    "ouvre explorateur de fichiers",
+    "launch_app"
+  ],
+  [
+    "créer un nouveau dossier sur bureau",
+    "create_folder"
+  ],
+  [
+    "cherche Céline",
+    "search_web"
+  ],
+  [
+    "envoie un mail",
+    "send_email"
+  ],
+  [
+    "ouvre calculatrice",
+    "launch_app"
+  ],
+  [
+    "cherche Photoshop",
+    "search_web"
+  ],
+  [
+    "mes événements",
+    "show_events"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
+  ],
+  [
+    "on est quel jour",
+    "get_date"
+  ],
+  [
+    "ajoute un événement travailler à 22h",
+    "add_event"
+  ],
+  [
+    "ouvre l'historique du navigateur",
+    "modify_event"
+  ],
+  [
+    "cherche sur internet il y a pour coder à web",
+    "get_time"
+  ],
+  [
+    "cherche des artificielle pour coller à web",
+    "search_web"
+  ],
+  [
+    "fermer chrome site professionnel",
+    "open_explorer"
+  ],
+  [
+    "créer un nouveau dossier",
+    "create_folder"
+  ],
+  [
+    "lis les fichiers connaissance",
+    "list_files"
+  ],
+  [
+    "créer un nouveau dossier",
+    "create_folder"
+  ],
+  [
+    "demande de précision",
+    "show_events"
+  ],
+  [
+    "dernière commande",
+    "confirm_selection"
+  ],
+  [
+    "envoie un email",
+    "send_email"
+  ],
+  [
+    "cherche sur Youtube Elon Musk",
+    "search_web"
+  ],
+  [
+    "envoie un mail",
+    "send_email"
+  ],
+  [
+    "créer un nouveau dossier",
+    "create_folder"
+  ],
+  [
+    "créer un nouveau dossier",
+    "create_folder"
+  ],
+  [
+    "créer un nouveau dossier",
+    "create_folder"
+  ],
+  [
+    "copier les fichiers",
+    "list_files"
+  ]
+]

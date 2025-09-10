@@ -1,0 +1,21 @@
+{
+  "recognition_mode": "google",
+  "wake_words": [
+    "assistant",
+    "réveille-toi",
+    "bonjour"
+  ],
+  "sleep_words": [
+    "dors",
+    "va en veille",
+    "arrête d'écouter"
+  ],
+  "voice_speed": 200,
+  "voice_volume": 1.0,
+  "timeout_listen": 10,
+  "phrase_time_limit": 8,
+  "vad_sensitivity": 0.5,
+  "language": "fr-FR",
+  "auto_feedback": true,
+  "confirm_destructive_actions": true
+}

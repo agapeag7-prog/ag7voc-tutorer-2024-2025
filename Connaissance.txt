@@ -1,0 +1,93 @@
+ Hey Cortana »
+« Hey Cortana, crée une alarme à xxH  »
+Si vous voulez régler une alarme avec Windows 10, c’est possible, notamment grâce à Cortana ! 
+Grâce à la commande « Hey Cortana, crée une alarme à 15 h », un signal retentira à cette heure-là. 
+À noter que vous pouvez créer plusieurs alarmes, y compris pour des jours différents : il suffit de notifier 
+la date précise à Cortana. Vous pouvez également accéder à la liste des alarmes programmées via la commande 
+« Hey Cortana, affiche les alarmes ».
+
+ 
+
+« Hey Cortana, désactive le WiFi »
+Pour désactiver ou activer la connexion WiFi, par exemple pour économiser la batterie 
+de votre ordinateur portable, vous pouvez mettre Cortana à contribution ! 
+« Hey Cortana, désactive le WiFi » et « Hey Cortana, active le WiFi » fonctionnent à merveille. V
+ous pouvez également demander à l’assistante vocale d’activer ou désactiver le Bluetooth, 
+ou encore le mode avion : modifiez juste la demande pour l’adapter en conséquence.
+
+ 
+
+« Hey Cortana, comment est la circulation… »
+Vous pouvez demander à Cortana tout un tas d’information concernant la géographie et l
+e trafic routier. Avec la commande « Hey Cortana, comment est la circulation jusqu’au travail ? », 
+vous aurez des indications sur les embouteillages sur la route, et la durée du trajet. « Hey Cortana, 
+où se trouve  » vous donnera des indications géographiques sur un lieu. Autre proposition : 
+« Hey Cortana, emmène-moi à  » vous donnera des indications sur la durée d’un trajet ainsi que 
+la distance kilométrique. Mais attention, pour ces fonctions, il faudra autoriser Cortana à vous 
+géolocaliser au préalable.
+
+
+
+
+
+
+
+« Hey Cortana, quel temps fait-il ? »
+Cortana est très douée avec les prévisions météo et peut donc vous donner des informations sur le temps qu’il 
+fait un peu partout. L’injonction « Hey Cortana, quel temps fait-il ? » vous permettra d’avoir des infos sur 
+là où vous vous trouvez, mais vous pouvez la questionner sur des centaines de villes à travers le monde. 
+On ne vous garantit pas que les prévisions seront justes à 100 %, mais vous pourrez quand même vous faire une idée !
+
+ 
+
+« Hey Cortana, Netflix trouve… »
+Pour peu que l’application Netflix soit installée sur votre ordinateur, vous pouvez lancer des films et séries 
+présents dans le catalogue du service directement avec Cortana. « Hey Cortana, Netflix trouve Glow » 
+vous ouvrira directement la page de l’excellente série de catch féminin ! Vous pouvez essayer avec tout, 
+même si votre accent anglais est un peu rouillé, Cortana s’en sort vraiment pas mal pour comprendre. 
+Et vous gagnez un peu de temps au passage !
+
+ 
+
+« Hey Cortana, quelle est cette musique ? »
+Que vous soyez abonné à Deezer ou Spotify, ou que vous écoutiez un fichier MP3 sur votre ordinateur, 
+vous pouvez interroger Cortana sur la musique jouée. Si vous ne connaissez pas l’interprète ou le titre 
+d’une chanson, dites simplement « Hey Cortana, quelle est cette musique ? » : l’intelligence artificielle 
+va alors analyser le morceau, et vous donner de nombreuses informations le concernant. Vous pourrez même 
+l’acheter dans la foulée, si vous le désirez, bien entendu !
+
+
+
+« Hey Cortana, fais une recherche »
+Même si elle arrive tardivement dans notre sélection, cette requête est évidente. Cortana peut faire des recherches 
+sur le Web, par l’intermédiaire du moteur Bing, de Microsoft. En pratique, vous pouvez lui poser de très nombreuses 
+questions, de type « Hey Cortana, quelle est la hauteur de l’Arc de Triomphe ? » ou « Quelle est la Capitale du Japon ? », 
+ou encore « Hey Cortana, fais une recherche sur James Bond » : dans certains cas, la réponse sera purement vocale tandis 
+que dans d’autres, l’assistant ouvrira directement une page de recherche pour vous dévoiler les résultats à l’écrit. 
+N’hésitez pas à tester !
+
+ 
+
+« Hey Cortana, lance l’application… »
+Cortana est très performante quand il s’agit de lancer des applications, installées depuis le Microsoft Store. 
+Qu’il s’agisse de programmes ou de jeux vidéo, vous pouvez tout lui demander ! Certes, 
+vous pouvez le faire à la main, mais cela vous fera économiser quelques manipulations, et c’est tout de même 
+très amusant de faire obéir l’IA au doigt et à l’œil… et surtout à la voix !
+
+ 
+
+« Hey Cortana, combien font… »
+Les maths, ce n’est peut-être pas votre truc, mais c’est assurément celui de Cortana ! L’assistant vocal est 
+capable de vous donner, à la volée, le résultat d’un calcul soit très simple, soit très complexe !
+ Essayez de coller Cortana sur une racine carrée, une division à plusieurs décimales ou une multiplication 
+compliquée et vous verrez qu’elle a toujours la réponse. Pour faire votre compatibilité sans calculatrice, 
+il n’y a pas mieux !
+
+ 
+
+« Hey Cortana, raconte-moi une blague »
+Si Cortana peut s’avérer très utile pour bien des fonctions et bien des usages, l’intelligence artificielle sait 
+aussi se détendre… et parler d’elle ! Avec la phrase « Hey Cortana, raconte-moi une blague », 
+vous pourrez découvrir à maintes reprises qu’elle a beaucoup d’humour ! Vous pouvez également lui poser de nombreuses 
+questions personnelles sur son âge, sa naissance, ses amours… n’hésitez pas à lui demander tout ce qu’il vous passe 
+par la tête, vous pourriez bien être très surpris par les réponses !

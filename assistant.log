@@ -1,0 +1,303 @@
+2025-06-24 14:16:54,537 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\Program Files\\Python312\\Lib\\comtypes\\gen\\__init__.py'>
+2025-06-24 14:16:54,606 [INFO] Using writeable comtypes cache directory: 'C:\Program Files\Python312\Lib\comtypes\gen'
+2025-06-24 14:16:56,392 [INFO] Could not import comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4: Typelib different than module
+2025-06-24 14:16:56,455 [INFO] # Generating comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4
+2025-06-24 14:16:56,925 [INFO] # Generating comtypes.gen.SpeechLib
+2025-06-24 14:18:57,806 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\Program Files\\Python312\\Lib\\comtypes\\gen\\__init__.py'>
+2025-06-24 14:18:57,822 [INFO] Using writeable comtypes cache directory: 'C:\Program Files\Python312\Lib\comtypes\gen'
+2025-06-24 14:18:58,292 [INFO] Could not import comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4: Typelib different than module
+2025-06-24 14:18:58,324 [INFO] # Generating comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4
+2025-06-24 14:18:58,589 [INFO] # Generating comtypes.gen.SpeechLib
+2025-06-24 14:23:39,254 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\Program Files\\Python312\\Lib\\comtypes\\gen\\__init__.py'>
+2025-06-24 14:23:39,317 [INFO] Using writeable comtypes cache directory: 'C:\Program Files\Python312\Lib\comtypes\gen'
+2025-06-24 14:23:40,020 [INFO] Could not import comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4: Typelib different than module
+2025-06-24 14:23:40,067 [INFO] # Generating comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4
+2025-06-24 14:23:40,457 [INFO] # Generating comtypes.gen.SpeechLib
+2025-06-24 14:44:32,852 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\Program Files\\Python312\\Lib\\comtypes\\gen\\__init__.py'>
+2025-06-24 14:44:32,883 [INFO] Using writeable comtypes cache directory: 'C:\Program Files\Python312\Lib\comtypes\gen'
+2025-06-24 14:46:33,697 [WARNING] Fichier non trouvï¿½ : bureau
+2025-06-24 15:10:34,513 [WARNING] Fichier non trouvï¿½ : bureau
+2025-07-04 15:48:42,979 [INFO] Initialisation de Porcupine pour la dï¿½tection du mot-clï¿½.
+2025-07-04 15:49:21,898 [CRITICAL] Erreur critique Porcupine : create() missing 1 required positional argument: 'access_key'
+2025-07-04 16:28:59,511 [INFO] Initialisation de Porcupine pour la dï¿½tection du mot-clï¿½.
+2025-07-04 16:29:56,187 [CRITICAL] Erreur critique Porcupine : create() missing 1 required positional argument: 'access_key'
+2025-07-06 23:16:16,209 [INFO] Initialisation de Porcupine pour la dï¿½tection du mot-clï¿½.
+2025-07-06 23:16:38,164 [CRITICAL] Erreur critique Porcupine : create() missing 1 required positional argument: 'access_key'
+2025-07-06 23:21:13,164 [INFO] Initialisation de Porcupine pour la dï¿½tection du mot-clï¿½.
+2025-07-06 23:21:13,164 [CRITICAL] Erreur critique Porcupine : create() missing 1 required positional argument: 'access_key'
+2025-07-06 23:24:31,294 [INFO] Initialisation de Porcupine pour la dï¿½tection du mot-clï¿½.
+2025-07-06 23:24:35,871 [CRITICAL] Erreur critique Porcupine : create() missing 1 required positional argument: 'access_key'
+2025-07-06 23:27:02,875 [INFO] Initialisation de Porcupine pour la dï¿½tection du mot-clï¿½.
+2025-07-06 23:27:03,804 [CRITICAL] Erreur critique Porcupine : create() missing 1 required positional argument: 'access_key'
+2025-07-07 13:22:41,586 [INFO] Initialisation de Porcupine pour la dï¿½tection du mot-clï¿½.
+2025-07-07 13:23:35,768 [CRITICAL] Erreur critique Porcupine : create() missing 1 required positional argument: 'access_key'
+Traceback (most recent call last):
+  File "C:\ag7voc\gui_qt.py", line 99, in porcupine_hotword_loop
+    porcupine = pvporcupine.create(keywords=[WAKE_WORD])
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create() missing 1 required positional argument: 'access_key'
+
+2025-07-10 14:52:36,567 [INFO] Dossier crï¿½ï¿½ : dossier
+2025-07-10 14:52:43,054 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 14:54:32,616 [ERROR] Erreur affichage ï¿½vï¿½nements : no such table: events
+2025-07-10 14:54:39,190 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:07:46,985 [ERROR] Erreur affichage ï¿½vï¿½nements : no such table: events
+2025-07-10 15:07:59,842 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:08:55,236 [INFO] Liste des fichiers dans .
+2025-07-10 15:09:07,353 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:12:23,553 [ERROR] Erreur affichage ï¿½vï¿½nements : no such table: events
+2025-07-10 15:12:32,113 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:13:14,864 [INFO] Liste des fichiers dans .
+2025-07-10 15:13:22,501 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:18:28,648 [INFO] Dossier crï¿½ï¿½ : bonjour
+2025-07-10 15:18:37,249 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:36:04,767 [INFO] Liste des fichiers dans .
+2025-07-10 15:36:19,954 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:36:33,272 [INFO] Liste des fichiers dans .
+2025-07-10 15:36:45,376 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:48:01,883 [ERROR] Erreur lancement application chrome: [WinError 2] Le fichier spï¿½cifiï¿½ est introuvable
+2025-07-10 15:50:02,872 [ERROR] Erreur ajout ï¿½vï¿½nement : no such table: events
+2025-07-10 15:50:14,978 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 15:51:09,295 [INFO] Liste des fichiers dans .
+2025-07-10 15:51:15,625 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 16:01:30,608 [INFO] Liste des fichiers dans .
+2025-07-10 16:01:40,484 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 16:01:52,659 [INFO] Liste des fichiers dans .
+2025-07-10 16:02:04,258 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 16:02:14,817 [INFO] Liste des fichiers dans .
+2025-07-10 16:02:22,988 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 16:03:07,895 [INFO] Liste des fichiers dans .
+2025-07-10 16:03:19,475 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-07-10 16:04:06,971 [ERROR] Erreur lancement application chrome: [WinError 2] Le fichier spï¿½cifiï¿½ est introuvable
+2025-08-01 12:57:54,168 [INFO] Liste des fichiers dans .
+2025-08-01 12:58:02,484 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-08-01 12:58:19,359 [INFO] Dossier crï¿½ï¿½ : Salim
+2025-08-01 12:58:24,316 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-08-01 12:58:34,460 [INFO] Liste des fichiers dans .
+2025-08-01 12:58:46,650 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-08-01 12:59:00,993 [ERROR] Erreur lecture fichier Salim : [Errno 13] Permission denied: 'Salim'
+2025-08-01 12:59:05,970 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-08-01 12:59:44,715 [INFO] Liste des fichiers dans .
+2025-08-01 12:59:52,376 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-02 05:05:48,908 [ERROR] Erreur lancement application chrome: [WinError 2] Le fichier spï¿½cifiï¿½ est introuvable
+2025-09-02 05:53:13,195 [INFO] ï¿½vï¿½nement ajoutï¿½ : 2025-09-02 - ï¿½ 6h00
+2025-09-02 05:53:25,685 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-02 05:54:20,898 [INFO] ï¿½vï¿½nement ajoutï¿½ : 2025-09-02 - rï¿½veil ï¿½ 7h00
+2025-09-02 05:54:26,677 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-02 05:55:39,465 [INFO] ï¿½vï¿½nement ajoutï¿½ : 2025-09-02 - crï¿½er un ï¿½vï¿½nement
+2025-09-02 05:55:48,413 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-02 05:56:07,392 [INFO] ï¿½vï¿½nement ajoutï¿½ : 2025-09-02 - ï¿½ agapï¿½ ag7
+2025-09-02 05:56:13,368 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-02 05:57:50,242 [INFO] Affichage des ï¿½vï¿½nements rï¿½ussi.
+2025-09-02 05:57:56,006 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-02 06:05:37,165 [INFO] ï¿½vï¿½nement ajoutï¿½ : 2025-09-02 - une tï¿½che rï¿½union
+2025-09-02 06:05:45,778 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-02 14:35:05,574 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-02 14:35:05,590 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-02 14:35:05,918 [INFO] Could not import comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4: source code string cannot contain null bytes
+2025-09-02 14:35:06,012 [INFO] # Generating comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4
+2025-09-02 14:35:06,449 [INFO] # Generating comtypes.gen.SpeechLib
+2025-09-02 14:35:06,496 [INFO] Could not import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0: source code string cannot contain null bytes
+2025-09-02 14:35:06,496 [INFO] # Generating comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
+2025-09-02 14:35:06,511 [INFO] # Generating comtypes.gen.stdole
+2025-09-02 15:12:12,159 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-02 15:12:12,628 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-03 15:28:36,707 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-03 15:28:36,824 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-03 15:46:26,900 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-03 15:46:27,009 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-03 15:59:09,037 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-03 15:59:09,131 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-03 20:43:03,626 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-03 20:43:03,735 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-03 23:04:40,105 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-03 23:04:40,355 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-03 23:12:13,449 [INFO] Dossier crï¿½ï¿½ : dossier
+2025-09-03 23:12:28,979 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-03 23:12:29,291 [WARNING] Dossier existe dï¿½jï¿½ : dossier
+2025-09-03 23:12:39,757 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-03 23:13:01,457 [INFO] Dossier crï¿½ï¿½ : bureau
+2025-09-03 23:13:11,356 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-03 23:13:21,872 [INFO] Liste des fichiers dans .
+2025-09-03 23:13:35,405 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-03 23:22:56,299 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-03 23:22:56,300 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-03 23:39:30,421 [ERROR] Erreur lancement application chrome: [WinError 2] Le fichier spï¿½cifiï¿½ est introuvable
+2025-09-04 00:07:28,607 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-04 00:07:28,623 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-04 01:08:04,982 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-04 01:08:05,029 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-04 01:12:22,423 [INFO] Affichage des ï¿½vï¿½nements rï¿½ussi.
+2025-09-04 01:12:27,423 [INFO] Feedback utilisateur : Incomprï¿½hensible
+2025-09-04 02:45:26,513 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-04 02:45:26,559 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-04 03:03:33,428 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-04 03:03:33,475 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-04 03:08:53,255 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-04 03:08:53,255 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-04 15:04:48,315 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-04 15:04:48,424 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-04 15:59:35,938 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-04 15:59:36,012 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-04 23:31:05,194 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-04 23:31:05,413 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-05 01:47:45,935 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-05 01:47:46,075 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-05 03:50:10,796 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-05 03:50:10,905 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-05 05:49:34,358 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-05 05:49:34,405 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-05 06:29:08,431 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-05 06:29:08,431 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-05 12:22:39,646 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-05 12:22:39,787 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-05 14:13:59,774 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-05 14:13:59,820 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-09 07:05:13,354 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 07:05:13,357 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-09 07:05:13,446 [INFO] Could not import comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4: Typelib different than module
+2025-09-09 07:05:13,461 [INFO] # Generating comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4
+2025-09-09 07:05:13,569 [INFO] # Generating comtypes.gen.SpeechLib
+2025-09-09 07:05:13,573 [INFO] Could not import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0: Typelib different than module
+2025-09-09 07:05:13,573 [INFO] # Generating comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
+2025-09-09 07:05:13,589 [INFO] # Generating comtypes.gen.stdole
+2025-09-09 08:24:04,195 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\tf_env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 08:24:04,195 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\tf_env\lib\site-packages\comtypes\gen'
+2025-09-09 17:57:55,685 [INFO] Could not import comtypes.gen, trying to create it.
+2025-09-09 17:57:55,687 [INFO] Created comtypes.gen directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 17:57:55,687 [INFO] Writing __init__.py file: 'C:\ag7voc\env\lib\site-packages\comtypes\gen\__init__.py'
+2025-09-09 17:57:55,705 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 17:57:55,764 [INFO] Could not import comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4: No module named 'comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4'
+2025-09-09 17:57:55,780 [INFO] # Generating comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4
+2025-09-09 17:57:56,004 [INFO] # Generating comtypes.gen.SpeechLib
+2025-09-09 17:57:56,021 [INFO] Could not import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0: No module named 'comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0'
+2025-09-09 17:57:56,032 [INFO] # Generating comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
+2025-09-09 17:57:56,048 [INFO] # Generating comtypes.gen.stdole
+2025-09-09 18:01:25,099 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 18:01:25,099 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 18:36:43,645 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 18:36:43,645 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 19:05:00,700 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 19:05:00,701 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 19:28:50,674 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 19:28:50,676 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 19:39:08,268 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 19:39:08,270 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 20:43:05,230 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 20:43:05,230 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:17:23,586 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:17:23,590 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:17:29,489 [WARNING] Matplotlib is building the font cache; this may take a moment.
+2025-09-09 22:17:30,470 [INFO] generated new fontManager
+2025-09-09 22:18:05,366 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:18:05,366 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:19:50,128 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:19:50,131 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:20:41,129 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:20:41,129 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:25:30,173 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:25:30,173 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:35:49,038 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:35:49,038 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:51:14,328 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:51:14,328 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:52:39,980 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:52:39,983 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 22:57:30,409 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 22:57:30,409 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 23:15:03,866 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 23:15:03,868 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 23:28:40,927 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 23:28:40,929 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 23:39:54,229 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 23:39:54,231 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-09 23:58:06,928 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-09 23:58:06,928 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 00:33:33,702 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 00:33:33,702 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 00:37:00,217 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 00:44:42,828 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 00:44:42,828 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 00:47:11,809 [INFO] Événement ajouté : 2025-09-10 - mets un événement réunion à 18h juste
+2025-09-10 00:47:39,706 [INFO] Feedback utilisateur : Oui
+2025-09-10 00:48:10,285 [INFO] Dossier créé : bureau
+2025-09-10 01:12:07,045 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 01:12:07,045 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 01:12:41,034 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:13:11,257 [INFO] Événement ajouté : 2025-09-10 - email à agapé gmail.com
+2025-09-10 01:13:25,040 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 01:18:41,641 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:19:30,189 [INFO] Affichage des événements réussi.
+2025-09-10 01:19:41,064 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 01:20:11,136 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:20:28,008 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:22:01,769 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:25:09,904 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:25:29,013 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 01:27:09,590 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:27:09,959 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:48:56,924 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 01:48:56,924 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 01:50:00,183 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:50:21,271 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 01:50:40,032 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 01:52:35,633 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 01:52:35,638 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 02:24:03,385 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 02:24:03,385 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 02:38:11,164 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 02:38:11,164 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 02:42:35,825 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 02:42:54,812 [INFO] Feedback utilisateur : Non
+2025-09-10 02:46:12,781 [WARNING] Fichier non trouvé pour renommage : r
+2025-09-10 02:46:22,810 [INFO] Feedback utilisateur : Non
+2025-09-10 02:47:23,976 [WARNING] Fichier non trouvé pour déplacement : connaissance
+2025-09-10 02:47:36,261 [INFO] Feedback utilisateur : Non
+2025-09-10 02:52:46,840 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 02:52:46,840 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 02:57:28,018 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 02:57:28,018 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 02:59:07,406 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 02:59:33,644 [INFO] Feedback utilisateur : Oui
+2025-09-10 03:02:02,032 [INFO] Affichage des événements réussi.
+2025-09-10 03:02:19,355 [INFO] Feedback utilisateur : Oui
+2025-09-10 03:12:24,195 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 03:12:53,991 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 03:14:24,449 [INFO] Événement ajouté : 2025-09-10 - ajoute un événement parler à 3h15
+2025-09-10 03:14:44,611 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 03:15:30,302 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 13:24:57,062 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 13:24:57,062 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 13:31:50,878 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 13:31:50,879 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 14:02:21,802 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 14:02:21,806 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 14:11:21,861 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 14:11:21,863 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 14:24:36,755 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 14:24:36,755 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 14:32:45,319 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 14:32:45,323 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 14:38:50,656 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 14:38:50,656 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 14:53:44,011 [INFO] Imported existing <module 'comtypes.gen' from 'C:\\ag7voc\\env\\lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2025-09-10 14:53:44,012 [INFO] Using writeable comtypes cache directory: 'C:\ag7voc\env\lib\site-packages\comtypes\gen'
+2025-09-10 19:59:47,738 [ERROR] Erreur création dossier: 'QTextEdit' object has no attribute 'write'
+2025-09-10 20:03:37,556 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 20:07:20,350 [INFO] Affichage des événements réussi.
+2025-09-10 20:07:31,316 [INFO] Feedback utilisateur : Oui
+2025-09-10 20:13:19,455 [INFO] Événement ajouté : 2025-09-10 - ajoute un événement travailler à 22h
+2025-09-10 20:13:32,852 [INFO] Feedback utilisateur : Oui
+2025-09-10 20:22:08,986 [ERROR] Erreur création dossier: 'QTextEdit' object has no attribute 'write'
+2025-09-10 20:23:14,700 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 20:23:35,469 [INFO] Feedback utilisateur : Non
+2025-09-10 20:42:24,596 [ERROR] Erreur création dossier: 'QTextEdit' object has no attribute 'write'
+2025-09-10 20:45:21,889 [INFO] Affichage des événements réussi.
+2025-09-10 20:45:35,931 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 21:22:59,475 [ERROR] Erreur création dossier: 'QTextEdit' object has no attribute 'write'
+2025-09-10 21:26:31,727 [ERROR] Erreur création dossier: 'QTextEdit' object has no attribute 'write'
+2025-09-10 21:26:43,842 [ERROR] Erreur création dossier: 'QTextEdit' object has no attribute 'write'
+2025-09-10 21:26:55,855 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 21:27:12,072 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 21:27:24,562 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 21:27:42,004 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'

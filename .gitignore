@@ -1,0 +1,5 @@
+env/
+vosk-model-fr/
+__pycache__/
+.vscode/
+vosk-model-fe.zip
