@@ -270,5 +270,45 @@
   [
     "copier les fichiers",
     "list_files"
+  ],
+  [
+    "créer un nouveau dossier",
+    "create_folder"
+  ],
+  [
+    "ouvre explorateur de fichiers",
+    "launch_app"
+  ],
+  [
+    "explorateur de",
+    "show_events"
+  ],
+  [
+    "déplace les fichiers connaissance",
+    "list_files"
+  ],
+  [
+    "cherche sur internet",
+    "search_web"
+  ],
+  [
+    "copie les fichiers connaissance TXD",
+    "list_files"
+  ],
+  [
+    "déplace les fichiers guides",
+    "list_files"
+  ],
+  [
+    "ouvre les dossiers bureau",
+    "list_files"
+  ],
+  [
+    "liste des fichiers",
+    "list_files"
+  ],
+  [
+    "créer dossier Salim",
+    "add_event"
   ]
 ]

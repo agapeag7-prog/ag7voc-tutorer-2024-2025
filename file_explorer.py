@@ -30,6 +30,7 @@ class VoiceControlledFileExplorer(QDialog):
         self.back_btn = QPushButton("Retour")
         self.back_btn.clicked.connect(self.go_back)
         self.forward_btn = QPushButton("Suivant")
+        self.forward_btn.clicked.connect(self.go_forward)
         self.forward_btn.setEnabled(False)
 
         self.path_edit = QLineEdit()

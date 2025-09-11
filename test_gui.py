@@ -1,7 +1,10 @@
 import sys
 import random
 import io
+import threading
 import os
+import time
+import psutil
 import numpy as np
 from collections import deque
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
@@ -26,503 +29,12 @@ from ag7voc import (
     INTENT_LABELS_FR,
 )
 from ai_engine import DQNAgent, ACTIONS, get_current_state, compute_reward, analyze_user_sentiment
-from voice_preferences import VoicePreferences, voice_prefs
 from voice_manager import voice_manager
-import psutil
-import threading
-import time
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
+from voice_preferences import voice_prefs
 
-QTextCursor = QTextCursor
+# Import or define assistant_signals
+from ag7voc import assistant_signals
 
-# def listen():
-#     return voice_manager.listen()
-
-# def speak(text, async_mode=True):
-#     voice_manager.speak(text, async_mode)
-
-# def start_continuous_listening(callback, wake_word_callback=None):
-#     voice_manager.start_continuous_listening(callback, wake_word_callback)
-
-# def stop_continuous_listening():
-#     voice_manager.stop_continuous_listening()
-
-class AssistantSignals(QObject):
-    update_display = pyqtSignal(str)
-    update_status = pyqtSignal(str, str, str)  # texte, couleur, icône
-    add_history_item = pyqtSignal(str, str)    # message, type
-    update_metrics = pyqtSignal(dict)
-    update_learning_stats = pyqtSignal(dict)
-    show_notification = pyqtSignal(str, str)   # titre, message
-    show_suggestions = pyqtSignal(list, str)  # suggestions, commande_originale
-    
-assistant_signals = AssistantSignals()
-
-class MplCanvas(FigureCanvas):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        self.fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = self.fig.add_subplot(111)
-        super(MplCanvas, self).__init__(self.fig)
-        self.setParent(parent)
-        
-        self.fig.patch.set_facecolor('#2c3e50')
-        self.axes.set_facecolor('#34495e')
-        self.axes.tick_params(colors='white')
-        self.axes.spines['bottom'].set_color('white')
-        self.axes.spines['top'].set_color('white') 
-        self.axes.spines['right'].set_color('white')
-        self.axes.spines['left'].set_color('white')
-        self.axes.yaxis.label.set_color('white')
-        self.axes.xaxis.label.set_color('white')
-        self.axes.title.set_color('white')
-
-class GradientHeader(QLabel):
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setFixedHeight(60)
-        self.setAlignment(Qt.AlignCenter)
-        self.setFont(QFont("Segoe UI", 16, QFont.Bold))
-        
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        gradient = QLinearGradient(0, 0, self.width(), 0)
-        gradient.setColorAt(0, QColor(41, 128, 185))
-        gradient.setColorAt(1, QColor(52, 152, 219))
-        
-        painter.setBrush(gradient)
-        painter.setPen(Qt.NoPen)
-        painter.drawRect(0, 0, self.width(), self.height())
-        
-        painter.setPen(QColor(255, 255, 255))
-        painter.drawText(0, 0, self.width(), self.height(), Qt.AlignCenter, self.text())
-
-class CircularProgress(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.value = 0
-        self.max_value = 100
-        self.setFixedSize(80, 80)
-        
-    def setValue(self, value):
-        self.value = max(0, min(value, self.max_value))
-        self.update()
-        
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor(236, 240, 241))
-        painter.drawEllipse(5, 5, 70, 70)
-        
-        painter.setBrush(QColor(52, 152, 219))
-        span_angle = int(-self.value * 3.6 * 16)  # Convertir en int
-        painter.drawPie(5, 5, 70, 70, 90 * 16, span_angle)
-        
-        painter.setPen(QColor(44, 62, 80))
-        painter.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        painter.drawText(0, 0, 80, 80, Qt.AlignCenter, f"{self.value}%")
-
-INTENT_LABELS_FR = {
-    "add_event": "Ajouter un événement",
-    "show_events": "Afficher les événements",
-    "delete_event": "Supprimer un événement",
-    "modify_event": "Modifier un événement",
-    "read_file": "Lire un fichier",
-    "write_file": "Écrire dans un fichier",
-    "delete_file": "Supprimer un fichier",
-    "create_folder": "Créer un dossier",
-    "list_files": "Lister les fichiers",
-    "rename_file": "Renommer un fichier",
-    "move_file": "Déplacer un fichier",
-    "get_time": "Donner l'heure",
-    "get_date": "Donner la date",
-    "show_help": "Aide",
-    "launch_app": "Lancer une application",
-    "shutdown": "Éteindre l'ordinateur",
-    "restart": "Redémarrer l'ordinateur",
-    "lock": "Verrouiller l'ordinateur",
-    "search_web": "Chercher sur internet",
-    "send_email": "Envoyer un email",
-    "system_info": "Informations système"
-}
-
-class RoundedFrame(QFrame):
-    def __init__(self, radius=10, *args, **kwargs):
-        super(RoundedFrame, self).__init__(*args, **kwargs)
-        self.radius = radius
-        self.setAttribute(Qt.WA_TranslucentBackground)
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        path = QPainterPath()
-        path.addRoundedRect(0, 0, self.width(), self.height(), self.radius, self.radius)
-        
-        palette = self.palette()
-        painter.fillPath(path, palette.color(QPalette.Window))
-
-class GradientLabel(QLabel):
-    def __init__(self, *args, **kwargs):
-        super(GradientLabel, self).__init__(*args, **kwargs)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        gradient = QLinearGradient(0, 0, self.width(), 0)
-        gradient.setColorAt(0, QColor(14, 78, 146))
-        gradient.setColorAt(1, QColor(30, 110, 190))
-        
-        painter.setBrush(gradient)
-        painter.setPen(Qt.NoPen)
-        painter.drawRoundedRect(0, 0, self.width(), self.height(), 5, 5)
-        
-        painter.setPen(QColor(255, 255, 255))
-        painter.drawText(0, 0, self.width(), self.height(), Qt.AlignCenter, self.text())
-
-class VoicePreferencesTab(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.voice_prefs = VoicePreferences()
-        self.initUI()
-    
-    def initUI(self):
-        layout = QVBoxLayout()
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
-        
-        header = GradientHeader("Préférences Vocales")
-        layout.addWidget(header)
-        
-        main_frame = QFrame()
-        main_frame.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 #ffffff, stop: 1 #f8f9fa);
-                border-radius: 15px;
-                border: 2px solid #e1e8ed;
-            }
-        """)
-        main_layout = QVBoxLayout(main_frame)
-        main_layout.setSpacing(25)
-        main_layout.setContentsMargins(25, 25, 25, 25)
-        
-        sections = [
-            self.create_recognition_section(),
-            self.create_voice_section(),
-            self.create_advanced_section()
-        ]
-        
-        for section in sections:
-            main_layout.addWidget(section)
-        
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(15)
-        
-        buttons = [
-            ("Sauvegarder", self.save_preferences, "#27ae60"),
-            ("Tester", self.test_voice, "#3498db"),
-            ("Réinitialiser", self.reset_preferences, "#e74c3c")
-        ]
-        
-        for text, callback, color in buttons:
-            btn = QPushButton(text)
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color};
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    padding: 12px 20px;
-                    font-weight: bold;
-                    font-size: 12px;
-                }}
-                QPushButton:hover {{
-                    background-color: {color};
-                    opacity: 0.9;
-                }}
-            """)
-            btn.clicked.connect(callback)
-            button_layout.addWidget(btn)
-        
-        main_layout.addLayout(button_layout)
-        layout.addWidget(main_frame)
-        self.setLayout(layout)
-        
-        self.load_preferences_to_ui()
-        
-    def create_recognition_section(self):
-        group = QGroupBox("Reconnaissance Vocale")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                font-size: 14px;
-                color: #2c3e50;
-                border: 2px solid #bdc3c7;
-                border-radius: 10px;
-                margin-top: 10px;
-                padding-top: 15px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-            }
-        """)
-        layout = QVBoxLayout(group)
-        
-        mode_layout = QHBoxLayout()
-        mode_layout.addWidget(QLabel("Mode:"))
-        self.recognition_combo = QComboBox()
-        self.recognition_combo.addItems(["Google (Online)", "Vosk (Offline)"])
-        self.recognition_combo.setCurrentIndex(0 if self.voice_prefs.get_preference("recognition_mode") == "google" else 1)
-        mode_layout.addWidget(self.recognition_combo)
-        mode_layout.addStretch()
-        
-        timeout_layout = QHBoxLayout()
-        timeout_layout.addWidget(QLabel("Timeout écoute:"))
-        self.timeout_spin = QSpinBox()
-        self.timeout_spin.setRange(3, 30)
-        self.timeout_spin.setSuffix("s")
-        self.timeout_spin.setValue(self.voice_prefs.get_preference("timeout_listen"))
-        timeout_layout.addWidget(self.timeout_spin)
-        timeout_layout.addStretch()
-        
-        layout.addLayout(mode_layout)
-        layout.addLayout(timeout_layout)
-        
-        return group
-        
-    def create_voice_section(self):
-        group = QGroupBox("Synthèse Vocale")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                font-size: 14px;
-                color: #2c3e50;
-                border: 2px solid #bdc3c7;
-                border-radius: 10px;
-                margin-top: 10px;
-                padding-top: 15px;
-            }
-        """)
-        layout = QVBoxLayout(group)
-        
-        speed_layout = QVBoxLayout()
-        speed_layout.addWidget(QLabel("Vitesse de parole:"))
-        speed_sublayout = QHBoxLayout()
-        self.speed_slider = QSlider(Qt.Horizontal)
-        self.speed_slider.setRange(100, 300)
-        self.speed_slider.setValue(self.voice_prefs.get_preference("voice_speed"))
-        self.speed_value = QLabel(f"{self.voice_prefs.get_preference('voice_speed')} mots/min")
-        self.speed_value.setAlignment(Qt.AlignRight)
-        speed_sublayout.addWidget(self.speed_slider)
-        speed_sublayout.addWidget(self.speed_value)
-        speed_layout.addLayout(speed_sublayout)
-        
-        volume_layout = QVBoxLayout()
-        volume_layout.addWidget(QLabel("Volume:"))
-        volume_sublayout = QHBoxLayout()
-        self.volume_slider = QSlider(Qt.Horizontal)
-        self.volume_slider.setRange(0, 100)
-        self.volume_slider.setValue(int(self.voice_prefs.get_preference("voice_volume") * 100))
-        self.volume_value = QLabel(f"{int(self.voice_prefs.get_preference('voice_volume') * 100)}%")
-        self.volume_value.setAlignment(Qt.AlignRight)
-        volume_sublayout.addWidget(self.volume_slider)
-        volume_sublayout.addWidget(self.volume_value)
-        volume_layout.addLayout(volume_sublayout)
-        
-        layout.addLayout(speed_layout)
-        layout.addLayout(volume_layout)
-        
-        self.speed_slider.valueChanged.connect(self.update_speed_label)
-        self.volume_slider.valueChanged.connect(self.update_volume_label)
-        
-        return group
-        
-    def create_advanced_section(self):
-        group = QGroupBox("Options Avancées")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                font-size: 14px;
-                color: #2c3e50;
-                border: 2px solid #bdc3c7;
-                border-radius: 10px;
-                margin-top: 10px;
-                padding-top: 15px;
-            }
-        """)
-        layout = QVBoxLayout(group)
-        
-        wake_layout = QVBoxLayout()
-        wake_layout.addWidget(QLabel("Mots de réveil (séparés par des virgules):"))
-        self.wake_words_edit = QLineEdit(", ".join(self.voice_prefs.get_preference("wake_words")))
-        wake_layout.addWidget(self.wake_words_edit)
-        
-        sleep_layout = QVBoxLayout()
-        sleep_layout.addWidget(QLabel("Mots de mise en veille:"))
-        self.sleep_words_edit = QLineEdit(", ".join(self.voice_prefs.get_preference("sleep_words")))
-        sleep_layout.addWidget(self.sleep_words_edit)
-        
-        self.auto_feedback_cb = QCheckBox("Demander un feedback automatique")
-        self.auto_feedback_cb.setChecked(self.voice_prefs.get_preference("auto_feedback"))
-        
-        self.confirm_actions_cb = QCheckBox("Confirmer les actions destructives")
-        self.confirm_actions_cb.setChecked(self.voice_prefs.get_preference("confirm_destructive_actions"))
-        
-        layout.addLayout(wake_layout)
-        layout.addLayout(sleep_layout)
-        layout.addWidget(self.auto_feedback_cb)
-        layout.addWidget(self.confirm_actions_cb)
-        
-        return group
-    
-    def update_speed_label(self, value):
-        self.speed_value.setText(f"{value} mots/min")
-
-    def update_volume_label(self, value):
-        self.volume_value.setText(f"{value}%")
-        
-    def save_preferences(self):
-        prefs = {
-            "recognition_mode": "google" if self.recognition_combo.currentIndex() == 0 else "vosk",
-            "voice_speed": self.speed_slider.value(),
-            "voice_volume": self.volume_slider.value() / 100.0,
-            "timeout_listen": self.timeout_spin.value(),
-            "wake_words": [word.strip() for word in self.wake_words_edit.text().split(",") if word.strip()],
-            "sleep_words": [word.strip() for word in self.sleep_words_edit.text().split(",") if word.strip()],
-            "auto_feedback": self.auto_feedback_cb.isChecked(),
-            "confirm_destructive_actions": self.confirm_actions_cb.isChecked()
-        }
-        
-        for key, value in prefs.items():
-            self.voice_prefs.set_preference(key, value)
-        
-        QMessageBox.information(self, "Succès", "Préférences sauvegardées!")
-        
-    def test_voice(self):
-        voice_manager.speak("Ceci est un test de la synthèse vocale. Les paramètres ont été appliqués.")
-
-    def reset_preferences(self):
-        reply = QMessageBox.question(self, "Confirmation", 
-                                   "Êtes-vous sûr de vouloir réinitialiser toutes les préférences?",
-                                   QMessageBox.Yes | QMessageBox.No)
-        
-        if reply == QMessageBox.Yes:
-            self.voice_prefs.preferences = self.voice_prefs.load_preferences()
-            self.load_preferences_to_ui()
-            QMessageBox.information(self, "Succès", "Préférences réinitialisées!")
-            
-    def load_preferences_to_ui(self):
-        self.recognition_combo.setCurrentIndex(0 if self.voice_prefs.get_preference("recognition_mode") == "google" else 1)
-        self.speed_slider.setValue(self.voice_prefs.get_preference("voice_speed"))
-        self.volume_slider.setValue(int(self.voice_prefs.get_preference("voice_volume") * 100))
-        self.timeout_spin.setValue(self.voice_prefs.get_preference("timeout_listen"))
-        self.wake_words_edit.setText(", ".join(self.voice_prefs.get_preference("wake_words")))
-        self.sleep_words_edit.setText(", ".join(self.voice_prefs.get_preference("sleep_words")))
-        self.auto_feedback_cb.setChecked(self.voice_prefs.get_preference("auto_feedback"))
-        self.confirm_actions_cb.setChecked(self.voice_prefs.get_preference("confirm_destructive_actions"))
-        
-        self.update_speed_label(self.speed_slider.value())
-        self.update_volume_label(self.volume_slider.value())
-        
-class DashboardTab(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.initUI()
-    
-    def initUI(self):
-        layout = QVBoxLayout()
-        layout.setSpacing(20)
-        layout.setContentsMargins(20, 20, 20, 20)
-        
-        header = GradientHeader("Tableau de Bord")
-        layout.addWidget(header)
-        
-        metrics_grid = QGridLayout()
-        metrics_grid.setSpacing(15)
-        
-        metrics = [
-            ("Intelligence", "q_score", "Score Q-Learning"),
-            ("Exploration", "exploration_rate", "Taux d'exploration"),
-            ("Mémoire", "memory_size", "Expériences stockées"),
-            ("Précision", "accuracy", "Précision moyenne")
-        ]
-        
-        for i, (icon, key, title) in enumerate(metrics):
-            frame = QFrame()
-            frame.setStyleSheet("""
-                QFrame {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                        stop: 0 #34495e, stop: 1 #2c3e50);
-                    border-radius: 10px;
-                    border: 1px solid #7f8c8d;
-                }
-            """)
-            frame_layout = QVBoxLayout(frame)
-            
-            title_label = QLabel(f"{icon} {title}")
-            title_label.setStyleSheet("color: #ecf0f1; font-size: 12px;")
-            title_label.setAlignment(Qt.AlignCenter)
-            
-            value_label = QLabel("0")
-            value_label.setObjectName(f"metric_{key}")
-            value_label.setStyleSheet("""
-                QLabel {
-                    color: #3498db;
-                    font-size: 18px;
-                    font-weight: bold;
-                }
-            """)
-            value_label.setAlignment(Qt.AlignCenter)
-            
-            frame_layout.addWidget(title_label)
-            frame_layout.addWidget(value_label)
-            
-            metrics_grid.addWidget(frame, i // 2, i % 2)
-        
-        layout.addLayout(metrics_grid)
-        
-        graph_group = QGroupBox("Performance de l'IA")
-        graph_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                color: #2c3e50;
-                border: 2px solid #bdc3c7;
-                border-radius: 10px;
-                margin-top: 10px;
-                padding-top: 15px;
-            }
-        """)
-        graph_layout = QVBoxLayout(graph_group)
-        
-        self.canvas = MplCanvas(self, width=5, height=3, dpi=100)
-        graph_layout.addWidget(self.canvas)
-        
-        layout.addWidget(graph_group)
-        self.setLayout(layout)
-    
-    def update_metrics(self, metrics):
-        for key, value in metrics.items():
-            label = self.findChild(QLabel, f"metric_{key}")
-            if label:
-                label.setText(str(value))
-    
-    def update_graph(self, data):
-        self.canvas.axes.clear()
-        self.canvas.axes.plot(data, 'b-', linewidth=2)
-        self.canvas.axes.set_title('Évolution des performances', color='white')
-        self.canvas.axes.set_facecolor('#34495e')
-        self.canvas.draw()
-        
 class VirtualAssistant(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -567,22 +79,14 @@ class VirtualAssistant(QMainWindow):
 
     def open_file_explorer(self):
         try:
-            from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLabel
-            
-            dialog = QDialog(self)
-            dialog.setWindowTitle("Explorateur de Fichiers")
-            dialog.setMinimumSize(400, 300)
-            
-            layout = QVBoxLayout(dialog)
-            layout.addWidget(QLabel("Explorateur vocal en cours de développement"))
-            
-            ok_btn = QPushButton("OK")
-            ok_btn.clicked.connect(dialog.accept)
-            layout.addWidget(ok_btn)
-            
-            dialog.exec_()
-            speak("Module explorateur en cours de développement")
-            
+            from file_explorer import open_file_explorer
+            selected_path = open_file_explorer("open")
+            if selected_path:
+                self.output_text.append(f"Fichier sélectionné : {selected_path}")
+                speak(f"Fichier sélectionné : {selected_path}")
+            else:
+                self.output_text.append("Aucune sélection")
+                speak("Aucune sélection")
         except Exception as e:
             self.output_text.append(f"Erreur explorateur: {e}")
     
@@ -792,6 +296,27 @@ class VirtualAssistant(QMainWindow):
         header_frame = QFrame()
         header_layout = QHBoxLayout(header_frame)
         
+        # Définition simple de CircularProgress si non importé
+        class CircularProgress(QProgressBar):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.setMaximum(100)
+                self.setMinimum(0)
+                self.setTextVisible(False)
+                self.setFixedSize(60, 60)
+                self.setStyleSheet("""
+                    QProgressBar {
+                        border: none;
+                        border-radius: 30px;
+                        background: #ecf0f1;
+                    }
+                    QProgressBar::chunk {
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                            stop:0 #3498db, stop:1 #2ecc71);
+                        border-radius: 30px;
+                    }
+                """)
+
         self.status_indicator = CircularProgress()
         self.status_indicator.setValue(0)
         
@@ -981,11 +506,11 @@ class VirtualAssistant(QMainWindow):
         
     def animate_status(self):
         if self.is_awake:
-            current = self.status_indicator.value
+            current = self.status_indicator.value()  # <-- Ajoute les parenthèses
             if current < 100:
                 self.status_indicator.setValue(current + 2)
         else:
-            current = self.status_indicator.value
+            current = self.status_indicator.value()  # <-- Ajoute les parenthèses
             if current > 0:
                 self.status_indicator.setValue(current - 2)
     
@@ -1252,7 +777,7 @@ Processus: {system_info['process_count']}
         except Exception as e:
             self.output_text.append(f"Erreur entraînement: {e}")
             self.afficher_message("<i>Erreur lors de l'entraînement de l'IA.</i>")
-            
+    
     # def update_real_time_metrics(self):
     #     """Met à jour les métriques DQN en temps réel"""
     #     try:
@@ -1518,6 +1043,18 @@ Processus: {system_info['process_count']}
     def show_preferences(self):
         """Affiche l'onglet des préférences"""
         try:
+            # Importer ou définir VoicePreferencesTab si non déjà importé
+            try:
+                from voice_preferences import VoicePreferencesTab
+            except ImportError:
+                # Définition minimale si l'import échoue
+                from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout
+                class VoicePreferencesTab(QWidget):
+                    def __init__(self):
+                        super().__init__()
+                        layout = QVBoxLayout(self)
+                        layout.addWidget(QLabel("Préférences vocales (définition minimale)"))
+
             # Créer l'onglet des préférences s'il n'existe pas
             if not hasattr(self, 'preferences_tab'):
                 self.preferences_tab = VoicePreferencesTab()

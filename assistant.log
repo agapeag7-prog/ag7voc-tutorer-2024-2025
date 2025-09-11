@@ -301,3 +301,20 @@ TypeError: create() missing 1 required positional argument: 'access_key'
 2025-09-10 21:27:12,072 [INFO] Feedback utilisateur : Incompréhensible
 2025-09-10 21:27:24,562 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
 2025-09-10 21:27:42,004 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 22:06:49,134 [ERROR] Erreur création dossier: 'QTextEdit' object has no attribute 'write'
+2025-09-10 22:26:17,533 [INFO] Affichage des événements réussi.
+2025-09-10 22:26:34,922 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 23:29:51,730 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 23:30:06,495 [INFO] Feedback utilisateur : Non
+2025-09-10 23:42:51,481 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 23:43:08,408 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 23:44:00,057 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 23:44:15,403 [INFO] Feedback utilisateur : Non
+2025-09-10 23:45:19,569 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 23:45:35,522 [INFO] Feedback utilisateur : Non
+2025-09-10 23:48:46,101 [ERROR] Erreur listage fichiers dans . : 'QTextEdit' object has no attribute 'write'
+2025-09-10 23:49:02,848 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 23:51:37,081 [INFO] Événement ajouté : 2025-09-10 - créer dossier Salim
+2025-09-10 23:51:52,672 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-10 23:53:08,764 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-10 23:53:32,380 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'

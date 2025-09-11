@@ -25,7 +25,7 @@ import socket
 from pathlib import Path
 from datetime import datetime
 
-from file_explorer import open_file_explorer
+from file_explorer import open_file_explorer as file_explorer_open, VoiceControlledFileExplorer
 
 from ai_engine import DQNAgent, ACTIONS, compute_reward, get_current_state, analyze_user_sentiment
 
@@ -33,6 +33,18 @@ from voice_preferences import voice_prefs
 
 from voice_manager import voice_manager
 
+from PyQt5.QtCore import QObject, pyqtSignal
+
+class AssistantSignals(QObject):
+    show_suggestions = pyqtSignal(object, object)
+    update_display = pyqtSignal(object)
+    update_status = pyqtSignal(str, str, str)
+    add_history_item = pyqtSignal(str, str)
+    update_metrics = pyqtSignal(dict)
+    update_learning_stats = pyqtSignal(dict)
+    show_notification = pyqtSignal(str, str)
+
+assistant_signals = AssistantSignals()
 
 try:
     from ai_engine import DQNAgent, ACTIONS, compute_reward, get_current_state, analyze_user_sentiment
@@ -50,7 +62,8 @@ except ImportError as e:
 
 
 try:
-    from file_explorer import open_file_explorer
+    from file_explorer import open_file_explorer, VoiceControlledFileExplorer
+    select_drive = None  # À remplacer si tu as une fonction dédiée
 except ImportError as e:
     print(f"Import explorateur fichiers: {e}")
     open_file_explorer = None
@@ -572,18 +585,10 @@ def modify_event(event_id, new_event):
 def open_file_explorer(mode="open", initial_path=None):
     """Ouvre l'explorateur de fichiers (fonction helper)"""
     try:
-        if open_file_explorer is None:
-            speak("Interface graphique non disponible")
-            return None
-            
-        from PyQt5.QtWidgets import QApplication, QDialog
+        from PyQt5.QtWidgets import QApplication
         app = QApplication.instance() or QApplication([])
-        explorer = open_file_explorer(mode=mode, initial_path=initial_path)
-        
-        if explorer.exec_() == QDialog.Accepted:
-            return explorer.selected_path
-        return None
-        
+        selected_path = file_explorer_open(mode=mode, initial_path=initial_path)
+        return selected_path
     except Exception as e:
         print(f"Erreur ouvrir explorateur: {e}")
         return None
@@ -598,26 +603,25 @@ def open_file_explorer(mode="open", initial_path=None):
         speak(f"Erreur création dossier: {e}")
 
 def read_file(filename=None):
-        """Lit un fichier avec sélection vocale"""
+    """Lit un fichier avec sélection vocale"""
+    if not filename:
+        speak("Quel fichier voulez-vous lire ?")
+        filename = open_file_explorer("open")
         if not filename:
-            speak("Quel fichier voulez-vous lire ?")
-            filename = open_file_explorer("open")
-            if not filename:
-                return ""
-        
-        try:
-            if os.path.exists(filename):
-                with open(filename, "r", encoding="utf-8") as f:
-                    content = f.read()
-                    print(content)
-                    speak("Fichier lu avec succès")
-                    return content
-            else:
-                speak("Fichier non trouvé")
-                return ""
-        except Exception as e:
-            speak(f"Erreur lors de la lecture du fichier: {e}")
             return ""
+    try:
+        if os.path.exists(filename):
+            with open(filename, "r", encoding="utf-8") as f:
+                content = f.read()
+                print(content)
+                speak("Fichier lu avec succès")
+                return content
+        else:
+            speak("Fichier non trouvé")
+            return ""
+    except Exception as e:
+        speak(f"Erreur lors de la lecture du fichier: {e}")
+        return ""
 
 def write_file(filename, content):
     try:
@@ -649,30 +653,15 @@ def create_folder(foldername=None):
     try:
         if not foldername:
             speak("Où voulez-vous créer le dossier ?")
-            
-            parent_dir = select_drive()  # Commencer par la sélection du lecteur
+            parent_dir = open_file_explorer("select_folder")  # Correction ici
             if not parent_dir:
                 return
-                
-            from test_gui import VoiceControlledFileExplorer
-            from PyQt5.QtWidgets import QApplication, QDialog
-            
-            app = QApplication.instance() or QApplication([])
-            explorer = VoiceControlledFileExplorer(mode="select_folder", initial_path=parent_dir)
-            
-            if explorer.exec_() != QDialog.Accepted:
-                return
-                
-            parent_dir = explorer.selected_path
             speak("Comment voulez-vous nommer le dossier ?")
-            
             foldername = listen()
             if not foldername:
                 speak("Nom de dossier non reconnu")
                 return
-                
             foldername = os.path.join(parent_dir, foldername)
-        
         if not os.path.exists(foldername):
             os.makedirs(foldername)
             speak(f"Dossier {os.path.basename(foldername)} créé avec succès")
@@ -680,7 +669,6 @@ def create_folder(foldername=None):
         else:
             speak("Le dossier existe déjà")
             logging.warning(f"Dossier existe déjà: {foldername}")
-            
     except Exception as e:
         error_msg = f"Erreur création dossier: {e}"
         speak(error_msg)
