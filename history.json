@@ -310,5 +310,61 @@
   [
     "créer dossier Salim",
     "add_event"
+  ],
+  [
+    "envoie mail",
+    "send_email"
+  ],
+  [
+    "recherche sur Youtube Céline Dion",
+    "search_web"
+  ],
+  [
+    "ouvre bloc-notes",
+    "launch_app"
+  ],
+  [
+    "ferme bloc-notes",
+    "launch_app"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
+  ],
+  [
+    "la date",
+    "get_date"
+  ],
+  [
+    "montre-moi mes événements",
+    "show_events"
+  ],
+  [
+    "recherche sur internet new look",
+    "search_web"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
+  ],
+  [
+    "et la date",
+    "modify_event"
+  ],
+  [
+    "la date",
+    "get_date"
+  ],
+  [
+    "ouvre Excel",
+    "launch_app"
+  ],
+  [
+    "ajoute un événement réunion à 20h juste",
+    "add_event"
+  ],
+  [
+    "créer dossier bonjour",
+    "add_event"
   ]
 ]

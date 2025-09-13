@@ -318,3 +318,11 @@ TypeError: create() missing 1 required positional argument: 'access_key'
 2025-09-10 23:51:52,672 [INFO] Feedback utilisateur : Incompréhensible
 2025-09-10 23:53:08,764 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
 2025-09-10 23:53:32,380 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-12 19:46:43,313 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-12 19:46:54,076 [ERROR] Erreur exécution commande: 'QTextEdit' object has no attribute 'write'
+2025-09-12 19:48:08,520 [INFO] Affichage des événements réussi.
+2025-09-12 19:48:19,894 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-12 19:53:59,803 [INFO] Événement ajouté : 2025-09-12 - ajoute un événement réunion à 20h juste
+2025-09-12 19:54:22,108 [INFO] Feedback utilisateur : Oui
+2025-09-12 19:55:01,586 [INFO] Événement ajouté : 2025-09-12 - créer dossier bonjour
+2025-09-12 19:55:19,482 [INFO] Feedback utilisateur : Non
