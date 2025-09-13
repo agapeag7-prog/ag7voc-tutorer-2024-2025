@@ -366,5 +366,9 @@
   [
     "créer dossier bonjour",
     "add_event"
+  ],
+  [
+    "cherche sur internet",
+    "search_web"
   ]
 ]
