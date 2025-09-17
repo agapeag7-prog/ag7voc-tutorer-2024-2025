@@ -414,5 +414,9 @@
   [
     "ouvre guide",
     "launch_app"
+  ],
+  [
+    "ouvre chrome",
+    "launch_app"
   ]
 ]

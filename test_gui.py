@@ -459,6 +459,7 @@ class VirtualAssistant(QMainWindow):
         buttons_grid = QGridLayout()
         buttons_grid.setSpacing(10)
         
+
         action_buttons = [
             ("Système", self.show_system_info, "#e74c3c"),
             ("Entraîner", self.trainAgent, "#9b59b6"),
@@ -1118,10 +1119,10 @@ class VirtualAssistant(QMainWindow):
                     speak(f"Voulez-vous que je lance la commande suivante : {label_fr} ?")
                     answer = listen(timeout=5)
                     if answer and "oui" in answer.lower():
-                        call_intent_command(next_intent)
+                        self.call_intent_command(next_intent)
         except Exception as e:
             print(f"Erreur analyse automatisation : {e}")
-
+    
 def compute_reward(command, success_rate):
     """Calcule la récompense pour l'apprentissage par renforcement"""
     base_reward = 1.0 if success_rate > 0.7 else -1.0
