@@ -326,3 +326,10 @@ TypeError: create() missing 1 required positional argument: 'access_key'
 2025-09-12 19:54:22,108 [INFO] Feedback utilisateur : Oui
 2025-09-12 19:55:01,586 [INFO] Événement ajouté : 2025-09-12 - créer dossier bonjour
 2025-09-12 19:55:19,482 [INFO] Feedback utilisateur : Non
+2025-09-13 21:28:39,105 [INFO] Affichage des événements réussi.
+2025-09-13 21:28:56,408 [INFO] Feedback utilisateur : Oui
+2025-09-13 21:29:51,567 [ERROR] Erreur lors du lancement de microsoft office: [WinError 193] %1 n’est pas une application Win32 valide: 'C:\\Program Files\\Microsoft Office\\Office16\\ACCICONS.EXE'
+2025-09-13 21:32:08,901 [INFO] Événement ajouté : 2025-09-13 - créer dossier bonjour
+2025-09-13 21:32:30,999 [INFO] Feedback utilisateur : Non
+2025-09-13 21:32:43,544 [INFO] Événement ajouté : 2025-09-13 - créer dossier bonjour
+2025-09-13 21:32:58,814 [INFO] Feedback utilisateur : Non

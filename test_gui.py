@@ -333,11 +333,11 @@ class VirtualAssistant(QMainWindow):
         
         # Menu de navigation
         nav_buttons = [
-            ("🏠 Tableau de bord", self.show_dashboard),
-            ("🎤 Commandes", self.show_commands),
-            ("📊 Statistiques", self.show_statistics),
-            ("⚙️ Préférences", self.show_preferences),
-            ("❓ Aide", self.show_help)
+            ("Tableau de bord", self.show_dashboard),
+            ("Commandes", self.show_commands),
+            ("Statistiques", self.show_statistics),
+            ("Préférences", self.show_preferences),
+            ("Aide", self.show_help)
         ]
         
         for text, callback in nav_buttons:
@@ -407,11 +407,9 @@ class VirtualAssistant(QMainWindow):
         """)
         header_layout = QHBoxLayout(header_frame)
         
-        # Indicateur circulaire
         self.status_indicator = CircularProgress()
         self.status_indicator.setValue(0)
         
-        # Informations de statut
         status_info = QVBoxLayout()
         self.status_label = QLabel("État: En veille")
         self.status_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #2c3e50;")
@@ -427,14 +425,12 @@ class VirtualAssistant(QMainWindow):
         header_layout.addLayout(status_info)
         header_layout.addStretch()
         
-        # Bouton d'action principal
         self.wake_button = ModernButton("🎤 Activer l'écoute", "#27ae60")
         self.wake_button.clicked.connect(self.toggle_listening)
         header_layout.addWidget(self.wake_button)
         
         content_layout.addWidget(header_frame)
         
-        # Réponse de l'assistant
         response_frame = QFrame()
         response_frame.setStyleSheet("""
             QFrame {
@@ -449,7 +445,7 @@ class VirtualAssistant(QMainWindow):
         response_title.setStyleSheet("font-weight: bold; color: #2c3e50; font-size: 14px;")
         response_layout.addWidget(response_title)
         
-        self.assistant_response = QLabel("👋 Bienvenue ! Je suis votre assistant vocal AG7VOC.")
+        self.assistant_response = QLabel("Bienvenue ! Je suis votre assistant vocal AG7VOC.")
         self.assistant_response.setWordWrap(True)
         self.assistant_response.setStyleSheet("""
             QLabel {
@@ -464,7 +460,6 @@ class VirtualAssistant(QMainWindow):
         
         content_layout.addWidget(response_frame)
         
-        # Grille de boutons d'action
         buttons_grid = QGridLayout()
         buttons_grid.setSpacing(10)
         
@@ -486,7 +481,6 @@ class VirtualAssistant(QMainWindow):
         
         content_layout.addLayout(buttons_grid)
         
-        # Progression de l'apprentissage
         learning_frame = QFrame()
         learning_frame.setStyleSheet("""
             QFrame {
@@ -528,7 +522,6 @@ class VirtualAssistant(QMainWindow):
         learning_layout.addWidget(self.learning_progress)
         content_layout.addWidget(learning_frame)
         
-        # Journal d'activité - PARTIE AMÉLIORÉE
         journal_frame = QFrame()
         journal_frame.setStyleSheet("""
             QFrame {
@@ -540,7 +533,7 @@ class VirtualAssistant(QMainWindow):
         journal_layout = QVBoxLayout(journal_frame)
         
         journal_header = QHBoxLayout()
-        journal_title = QLabel("📝 JOURNAL DES ACTIVITÉS")
+        journal_title = QLabel("JOURNAL DES ACTIVITÉS")
         journal_title.setStyleSheet("""
             QLabel {
                 font-weight: bold;
@@ -651,7 +644,7 @@ class VirtualAssistant(QMainWindow):
         self.update_status("État : En veille", "#e74c3c")
         self.status_icon.setText("🔴")
         self.status_text.setText("En veille")
-        self.wake_button.setText("🎤 Activer l'écoute")
+        self.wake_button.setText("Activer l'écoute")
         self.wake_button.color = "#27ae60"
         self.afficher_message("Assistant mis en veille")
         speak("Je me mets en veille. Dites 'assistant' si vous avez besoin de moi.")
@@ -858,20 +851,20 @@ class VirtualAssistant(QMainWindow):
         if self.history:
             last_command = self.history[-1]
             suggestions = get_top_intents_spacy_similarity(last_command)
-            self.afficher_message("💡 Suggestions IA:")
+            self.afficher_message("Suggestions IA:")
             for intent, score in suggestions:
                 label = INTENT_LABELS_FR.get(intent, intent)
                 self.afficher_message(f"- {label} (score: {score:.2f})")
         else:
-            self.afficher_message("ℹ️ Aucune commande à suggérer.")
+            self.afficher_message("Aucune commande à suggérer.")
 
     def afficher_historique(self):
-        self.afficher_message("📋 Historique des commandes:")
+        self.afficher_message("Historique des commandes:")
         if self.history:
             for i, cmd in enumerate(self.history[-10:], 1):  # Affiche les 10 dernières
                 self.afficher_message(f"{i}. {cmd}")
         else:
-            self.afficher_message("ℹ️ Aucune commande enregistrée.")
+            self.afficher_message("Aucune commande enregistrée.")
 
     def test_dqn_save(self):
         if self.agent:
@@ -879,34 +872,34 @@ class VirtualAssistant(QMainWindow):
                 test_state = np.random.rand(1, 5)
                 test_next_state = np.random.rand(1, 5)
                 self.agent.remember(test_state, 0, 10, test_next_state, False)
-                self.afficher_message("✅ Test DQN réussi - Expérience sauvegardée")
+                self.afficher_message("Test DQN réussi - Expérience sauvegardée")
             except Exception as e:
-                self.afficher_message(f"❌ Erreur test DQN: {str(e)}")
+                self.afficher_message(f"Erreur test DQN: {str(e)}")
         else:
-            self.afficher_message("❌ Agent DQN non disponible")
+            self.afficher_message("Agent DQN non disponible")
 
     def open_file_explorer(self):
         try:
             os.system("explorer .")
-            self.afficher_message("📁 Explorateur de fichiers ouvert")
+            self.afficher_message("Explorateur de fichiers ouvert")
         except Exception as e:
-            self.afficher_message(f"❌ Erreur ouverture explorateur: {str(e)}")
+            self.afficher_message(f"Erreur ouverture explorateur: {str(e)}")
 
     def test_microphone(self):
         try:
-            self.afficher_message("🎤 Test du microphone en cours...")
+            self.afficher_message("Test du microphone en cours...")
             speak("Test du microphone. Parlez maintenant.")
             
             text = listen(timeout=5)
             if text:
-                self.afficher_message(f"✅ Test réussi: '{text}'")
+                self.afficher_message(f"Test réussi: '{text}'")
                 speak(f"J'ai entendu: {text}")
             else:
-                self.afficher_message("❌ Aucun son détecté")
+                self.afficher_message("Aucun son détecté")
                 speak("Je n'ai rien entendu")
                 
         except Exception as e:
-            self.afficher_message(f"❌ Erreur test microphone: {str(e)}")
+            self.afficher_message(f"Erreur test microphone: {str(e)}")
 
     def export_logs(self):
         """Exporte les logs vers un fichier"""
@@ -914,9 +907,9 @@ class VirtualAssistant(QMainWindow):
             filename = f"ag7voc_logs_{time.strftime('%Y%m%d_%H%M%S')}.txt"
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(self.output_text.toPlainText())
-            self.afficher_message(f"✅ Logs exportés: {filename}")
+            self.afficher_message(f"Logs exportés: {filename}")
         except Exception as e:
-            self.afficher_message(f"❌ Erreur export logs: {str(e)}")
+            self.afficher_message(f"Erreur export logs: {str(e)}")
 
     # Méthodes pour gérer les signaux thread-safe
     def show_suggestions_safe(self, suggestions, original_command):
@@ -935,7 +928,7 @@ class VirtualAssistant(QMainWindow):
         QTimer.singleShot(0, lambda: self.update_metrics(metrics))
 
     def show_suggestions(self, suggestions, original_command):
-        self.afficher_message(f"💡 Suggestions pour '{original_command}': {suggestions}")
+        self.afficher_message(f"Suggestions pour '{original_command}': {suggestions}")
 
     def add_history_item(self, msg, item_type):
         colors = {
@@ -948,7 +941,7 @@ class VirtualAssistant(QMainWindow):
 
     def update_metrics(self, metrics):
         for key, value in metrics.items():
-            self.afficher_message(f"📊 {key}: {value}")
+            self.afficher_message(f"{key}: {value}")
 
 # Fonctions manquantes simulées
 def compute_reward(command, success_rate):
@@ -961,11 +954,9 @@ def get_current_state(command, success_rate, history_length):
     """Simule un état pour le DQN"""
     return np.random.rand(5)
 
-# Point d'entrée principal
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     
-    # Appliquer une palette de couleurs globale
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor(245, 247, 250))
     palette.setColor(QPalette.WindowText, QColor(44, 62, 80))

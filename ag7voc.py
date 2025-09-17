@@ -244,7 +244,7 @@ INTENTS = {
     
     "navigate_back": [
         "retour arrière", "revenir en arrière", "précédent",
-        "dossier précédent", "retour dossier"
+        "dossier précédent", "retour dossier", "retour"
     ],
     
     "navigate_forward": [
@@ -253,7 +253,7 @@ INTENTS = {
     
     "confirm_selection": [
         "valider sélection", "confirmer choix", "accepter sélection",
-        "choisir ceci", "sélectionner ça"
+        "choisir ceci", "sélectionner ça", "confirmer"
     ]
 }
 
@@ -903,6 +903,8 @@ def launch_app(command):
         "wordpad": "write.exe",
         "magnifier": "magnify.exe",
         "narrator": "narrator.exe",
+        "git": "git-bash.exe",
+        "xamp": "xampp-control.exe",
     }
     
     if clean_command in system_apps:
@@ -970,6 +972,8 @@ def launch_app(command):
         response = listen()
         if response and "oui" in response.lower():
             search_web(f"télécharger {clean_command} windows")
+        else:
+            speak(f"d'accord")
 
 def process_voice_command(command, forced_intent=None):
     global dqn_agent
@@ -1171,24 +1175,24 @@ def show_help():
 
 def shutdown_computer():
     try:
-        subprocess.run(["shutdown", "/s", "/t", "0"], check=True)
         speak("Arrêt de l'ordinateur en cours.")
+        subprocess.run(["shutdown", "/s", "/t", "0"], check=True)
     except Exception as e:
         logging.error(f"Erreur arrêt ordinateur: {e}")
         speak("Erreur lors de l'arrêt de l'ordinateur.")
 
 def restart_computer():
     try:
-        subprocess.run(["shutdown", "/r", "/t", "0"], check=True)
         speak("Redémarrage de l'ordinateur en cours.")
+        subprocess.run(["shutdown", "/r", "/t", "0"], check=True)
     except Exception as e:
         logging.error(f"Erreur redémarrage ordinateur: {e}")
         speak("Erreur lors du redémarrage de l'ordinateur.")
 
 def lock_computer():
     try:
-        subprocess.run(["rundll32.exe", "user32.dll,LockWorkStation"], check=True)
         speak("Ordinateur verrouillé.")
+        subprocess.run(["rundll32.exe", "user32.dll,LockWorkStation"], check=True)
     except Exception as e:
         logging.error(f"Erreur verrouillage ordinateur: {e}")
         speak("Erreur lors du verrouillage de l'ordinateur.")

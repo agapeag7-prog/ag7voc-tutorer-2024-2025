@@ -370,5 +370,41 @@
   [
     "cherche sur internet",
     "search_web"
+  ],
+  [
+    "montre mes événements",
+    "show_events"
+  ],
+  [
+    "ouvre Microsoft Office",
+    "launch_app"
+  ],
+  [
+    "ouvre Excel",
+    "launch_app"
+  ],
+  [
+    "cherche YouTube",
+    "search_web"
+  ],
+  [
+    "aide-moi",
+    "show_help"
+  ],
+  [
+    "informations système",
+    "system_info"
+  ],
+  [
+    "créer dossier bonjour",
+    "add_event"
+  ],
+  [
+    "créer dossier bonjour",
+    "add_event"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
   ]
 ]

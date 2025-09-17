@@ -67,7 +67,6 @@ class DQNAgent:
         except Exception as e:
             print(f"Impossible de charger le modèle existant: {e}")
             print("Création d'un nouveau modèle...")
-            # Réinitialisation des modèles en cas d'erreur
             self.model = self._build_model()
             self.target_model = self._build_model()
             self.update_target_model()
