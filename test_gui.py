@@ -21,6 +21,13 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PyQt5.QtCore import Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve, pyqtSignal, QObject, QPoint
 from PyQt5.QtGui import QFont, QColor, QPalette, QIcon, QLinearGradient, QPainter, QPainterPath, QPixmap, QBrush, QTextCursor, QPen
 
+from ai_engine import dqn_agent
+
+import matplotlib
+matplotlib.use('Qt5Agg')
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
 class AssistantSignals(QObject):
     show_suggestions = pyqtSignal(list, str)
     update_display = pyqtSignal(str)
@@ -144,7 +151,13 @@ class DQNAgent:
             return None
         return random.uniform(0.1, 0.5)
 
-dqn_agent = DQNAgent()
+    def get_training_metrics(self):
+        return {
+            "memory_size": len(self.memory),
+            "epsilon": self.epsilon,
+            "exploration_rate": f"{self.epsilon * 100:.1f}%",
+            "batch_size": getattr(self, "batch_size", 32)
+        }
 
 class CircularProgress(QProgressBar):
     def __init__(self, parent=None):
@@ -231,7 +244,7 @@ class StdoutRedirector:
     def flush(self):
         pass
 
-class VirtualAssistant(QMainWindow):
+class VirtualAssistant(QMainWindow):               
     def __init__(self):
         super().__init__()
         
@@ -244,6 +257,8 @@ class VirtualAssistant(QMainWindow):
         self.last_command_success = 0.5
         self.batch_size = 32
         self.is_listening = False
+        
+        self.agent = dqn_agent
         
         assistant_signals.show_suggestions.connect(self.show_suggestions_safe)
         assistant_signals.update_display.connect(self.update_display_safe)
@@ -317,8 +332,9 @@ class VirtualAssistant(QMainWindow):
         
         nav_buttons = [
             ("Tableau de bord", self.show_dashboard),
-            ("Commandes", self.show_commands),
             ("Statistiques", self.show_statistics),
+            ("Configurer la voix", self.show_voice_config),
+            ("Commandes", self.show_commands),
             ("Préférences", self.show_preferences),
             ("Aide", self.show_help)
         ]
@@ -657,6 +673,54 @@ class VirtualAssistant(QMainWindow):
         self.afficher_message(f"Agent DQN: {len(self.agent.memory)} expériences chargées")
         self.afficher_message("Prêt à recevoir des commandes vocales")
 
+        self.central_stack = QStackedWidget()
+        main_layout.addWidget(self.central_stack)
+
+        self.dashboard_widget = content_widget  # ton dashboard existant
+        self.commands_widget = QWidget()        # à remplir selon tes besoins
+
+        # Ajout de la classe StatsWidget
+        class StatsWidget(QWidget):
+            def __init__(self, agent, parent=None):
+                super().__init__(parent)
+                self.agent = agent
+                layout = QVBoxLayout(self)
+                layout.setSpacing(20)
+                layout.setContentsMargins(40, 30, 40, 30)
+
+                title = QLabel("Statistiques de l'IA")
+                title.setStyleSheet("font-size: 20px; font-weight: bold; color: #3498db;")
+                layout.addWidget(title)
+
+                self.stats_labels = {}
+                stats_keys = ["memory_size", "epsilon", "exploration_rate", "batch_size"]
+                for key in stats_keys:
+                    lbl = QLabel(f"{key}: ...")
+                    lbl.setStyleSheet("font-size: 15px; color: #2c3e50;")
+                    layout.addWidget(lbl)
+                    self.stats_labels[key] = lbl
+
+                layout.addStretch()
+
+            def update_stats_labels(self, metrics):
+                for key, lbl in self.stats_labels.items():
+                    value = metrics.get(key, "...")
+                    lbl.setText(f"{key}: {value}")
+
+        self.stats_widget = StatsWidget(self.agent)
+        self.preferences_widget = QWidget()     # à remplir selon tes besoins
+        self.help_widget = QWidget()            # à remplir selon tes besoins
+        self.voice_config_widget = VoiceConfigWidget()
+                
+        self.central_stack.addWidget(self.dashboard_widget)
+        self.central_stack.addWidget(self.commands_widget)
+        self.central_stack.addWidget(self.stats_widget)
+        self.central_stack.addWidget(self.preferences_widget)
+        self.central_stack.addWidget(self.help_widget)
+        self.central_stack.addWidget(self.voice_config_widget)
+
+        self.central_stack.setCurrentWidget(self.dashboard_widget)
+
     def toggle_listening(self):
         """Active ou désactive l'écoute"""
         if not self.is_awake:
@@ -664,6 +728,58 @@ class VirtualAssistant(QMainWindow):
         else:
             self.put_to_sleep()
 
+    def call_intent_command(intent, command_text=None):
+        """
+        Appelle directement la commande correspondant à une intention.
+        Si command_text est fourni, il est utilisé comme paramètre.
+        """
+        from ag7voc import (
+            read_file, write_file, delete_file, create_folder, list_files,
+            rename_file, move_file, show_events, add_event, delete_event, modify_event,
+            get_system_info, launch_app, shutdown_computer, restart_computer, lock_computer,
+            search_web, send_email, show_help, process_voice_command, INTENT_LABELS_FR
+        )
+
+        intent_map = {
+            "read_file": read_file,
+            "write_file": write_file,
+            "delete_file": delete_file,
+            "create_folder": create_folder,
+            "list_files": list_files,
+            "rename_file": rename_file,
+            "move_file": move_file,
+            "show_events": show_events,
+            "add_event": add_event,
+            "delete_event": delete_event,
+            "modify_event": modify_event,
+            "get_time": lambda: process_voice_command("il est quelle heure"),
+            "get_date": lambda: process_voice_command("quelle date"),
+            "show_help": show_help,
+            "launch_app": lambda: launch_app(command_text or "explorateur"),
+            "shutdown": shutdown_computer,
+            "restart": restart_computer,
+            "lock": lock_computer,
+            "search_web": lambda: search_web(command_text or ""),
+            "send_email": lambda: send_email(command_text or ""),
+            "weather": lambda: process_voice_command("météo"),
+            "list_drives": lambda: process_voice_command("lister les lecteurs"),
+            "historique": lambda: process_voice_command("montre l'historique"),
+            "system_info": get_system_info,
+        }
+
+        func = intent_map.get(intent)
+        if func:
+            try:
+                if intent in ["write_file", "add_event", "delete_event", "modify_event", "search_web", "send_email", "launch_app"]:
+                    func(command_text)
+                else:
+                    func()
+            except Exception as e:
+                print(f"Erreur appel commande '{intent}': {e}")
+        else:
+            print(f"Intention '{intent}' non reconnue.")
+
+    
     def wake_up_assistant(self):
         """Réveille l'assistant"""
         self.is_awake = True
@@ -739,18 +855,16 @@ class VirtualAssistant(QMainWindow):
         """Boucle d'écoute principale"""
         while True:
             try:
+                self.check_automation()  # Ajout ici
                 if not self.is_awake:
-                    # En veille, écoute seulement le mot-clé
                     text = listen(timeout=1)
                     if text and any(word in text.lower() for word in voice_prefs.get_preference("wake_words")):
                         self.wake_up_assistant()
                         time.sleep(2)
                 else:
-                    # Réveillé, écoute les commandes
                     text = listen(timeout=3)
                     if text:
                         self.process_command(text)
-                        # Vérifier les commandes de mise en veille
                         if any(word in text.lower() for word in voice_prefs.get_preference("sleep_words")):
                             self.put_to_sleep()
             except Exception as e:
@@ -762,29 +876,22 @@ class VirtualAssistant(QMainWindow):
             self.afficher_message(f"Commande reçue: {text}")
             self.history.append(text)
 
-            # Appel du backend AG7VOC pour traiter la commande
-            from ag7voc import process_voice_command, get_top_intents_spacy_similarity, INTENT_LABELS_FR
+            from ag7voc import process_voice_command, get_top_intents_spacy_similarity, INTENT_LABELS_FR, get_command_suggestions
 
-            # Suggestions IA automatiques AVANT exécution
-            suggestions = get_top_intents_spacy_similarity(text)
-            if suggestions:
-                self.afficher_message("Suggestions IA (avant exécution):")
-                for intent, score in suggestions:
-                    label = INTENT_LABELS_FR.get(intent, intent)
-                    self.afficher_message(f"- {label} (score: {score:.2f})")
-
-            # Exécution réelle de la commande
             response = process_voice_command(text)
             self.afficher_message(f"Réponse: {response}")
             speak(response)
 
-            # Suggestions IA automatiques APRÈS exécution
-            suggestions_after = get_top_intents_spacy_similarity(response if response else text)
-            if suggestions_after:
-                self.afficher_message("Suggestions IA (après exécution):")
-                for intent, score in suggestions_after:
-                    label = INTENT_LABELS_FR.get(intent, intent)
-                    self.afficher_message(f"- {label} (score: {score:.2f})")
+            suggestions = get_command_suggestions(text, top_n=3)
+            if suggestions:
+                self.afficher_message("Suggestions IA contextuelles :")
+                for kw, label_fr, intent, score in suggestions:
+                    self.afficher_message(f"- {label_fr} : \"{kw}\" (score: {score:.2f})")
+                recent_intents = [h[1] for h in self.history[-5:] if isinstance(h, tuple) and len(h) > 1]
+                if any(intent == ri for _, _, intent, _ in suggestions for ri in recent_intents):
+                    self.afficher_message("Action similaire détectée dans l'historique. Voulez-vous répéter ?")
+            else:
+                self.afficher_message("Aucune suggestion IA pertinente.")
 
         except Exception as e:
             self.afficher_message(f"Erreur traitement commande: {str(e)}")
@@ -841,21 +948,23 @@ class VirtualAssistant(QMainWindow):
         )
 
     def show_dashboard(self):
-        self.afficher_message("Affichage du tableau de bord")
+        self.central_stack.setCurrentWidget(self.dashboard_widget)
 
     def show_commands(self):
-        self.afficher_message("Affichage des commandes")
+        self.central_stack.setCurrentWidget(self.commands_widget)
 
     def show_statistics(self):
-        self.afficher_message("Affichage des statistiques")
+        self.central_stack.setCurrentWidget(self.stats_widget)
 
     def show_preferences(self):
-        self.afficher_message("Affichage des préférences")
+        self.central_stack.setCurrentWidget(self.preferences_widget)
 
+    def show_voice_config(self):
+        self.central_stack.setCurrentWidget(self.voice_config_widget)
+    
     def show_help(self):
-        self.afficher_message("Affichage de l'aide")
+        self.central_stack.setCurrentWidget(self.help_widget)
 
-    # Méthodes pour les actions des boutons
     def show_system_info(self):
         info = get_system_info()
         self.afficher_message("=== INFORMATIONS SYSTÈME ===")
@@ -873,14 +982,14 @@ class VirtualAssistant(QMainWindow):
             try:
                 loss = self.agent.replay(self.batch_size)
                 if loss is not None:
-                    self.afficher_message(f"✅ Entraînement terminé. Perte: {loss:.4f}")
+                    self.afficher_message(f"Entraînement terminé. Perte: {loss:.4f}")
                     speak("Entraînement terminé avec succès.")
                 else:
-                    self.afficher_message("❌ Données insuffisantes pour l'entraînement")
+                    self.afficher_message("Données insuffisantes pour l'entraînement")
             except Exception as e:
-                self.afficher_message(f"❌ Erreur entraînement: {str(e)}")
+                self.afficher_message(f"Erreur entraînement: {str(e)}")
         else:
-            self.afficher_message("❌ Agent DQN non disponible")
+            self.afficher_message("Agent DQN non disponible")
 
     def suggere_action(self):
         if self.history:
@@ -974,10 +1083,45 @@ class VirtualAssistant(QMainWindow):
         self.output_text.append(colored_msg)
 
     def update_metrics(self, metrics):
-        for key, value in metrics.items():
-            self.afficher_message(f"{key}: {value}")
+        if hasattr(self, "stats_widget"):
+            self.stats_widget.update_stats_labels(metrics)
 
-# Fonctions manquantes simulées
+    def check_automation(self):
+        """
+        Propose des routines automatiques selon l'historique :
+        Si une commande A est souvent suivie d'une commande B,
+        alors après A, l'assistant propose automatiquement B.
+        """
+        try:
+            with open("history.json", "r", encoding="utf-8") as f:
+                history = json.load(f)
+            if len(history) < 2:
+                return
+
+            sequence_counts = {}
+            for i in range(len(history) - 1):
+                cmd_a, intent_a = history[i]
+                cmd_b, intent_b = history[i + 1]
+                key = (intent_a, intent_b)
+                sequence_counts[key] = sequence_counts.get(key, 0) + 1
+
+            if self.history:
+                last_cmd = self.history[-1]
+                from ag7voc import get_intent_spacy_similarity
+                last_intent = get_intent_spacy_similarity(last_cmd)
+                candidates = [(b, count) for (a, b), count in sequence_counts.items() if a == last_intent]
+                if candidates:
+                    next_intent, _ = max(candidates, key=lambda x: x[1])
+                    from ag7voc import INTENT_LABELS_FR
+                    label_fr = INTENT_LABELS_FR.get(next_intent, next_intent)
+                    self.afficher_message(f"Suggestion IA : Après cette commande, vous exécutez souvent '{label_fr}'. Voulez-vous la lancer ?")
+                    speak(f"Voulez-vous que je lance la commande suivante : {label_fr} ?")
+                    answer = listen(timeout=5)
+                    if answer and "oui" in answer.lower():
+                        call_intent_command(next_intent)
+        except Exception as e:
+            print(f"Erreur analyse automatisation : {e}")
+
 def compute_reward(command, success_rate):
     """Calcule la récompense pour l'apprentissage par renforcement"""
     base_reward = 1.0 if success_rate > 0.7 else -1.0
@@ -987,6 +1131,131 @@ def compute_reward(command, success_rate):
 def get_current_state(command, success_rate, history_length):
     """Simule un état pour le DQN"""
     return np.random.rand(5)
+
+class VoiceConfigWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        from voice_manager import voice_manager
+        from voice_preferences import voice_prefs
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(20)
+        layout.setContentsMargins(40, 30, 40, 30)
+
+        title = QLabel("Configuration de la voix")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #3498db;")
+        layout.addWidget(title)
+
+        speed_label = QLabel("Vitesse de la voix")
+        speed_slider = QSlider(Qt.Horizontal)
+        speed_slider.setMinimum(100)
+        speed_slider.setMaximum(300)
+        speed_slider.setValue(voice_manager.tts_engine.getProperty('rate'))
+        speed_slider.setTickInterval(10)
+        speed_slider.setTickPosition(QSlider.TicksBelow)
+        layout.addWidget(speed_label)
+        layout.addWidget(speed_slider)
+
+        volume_label = QLabel("Volume de la voix")
+        volume_slider = QSlider(Qt.Horizontal)
+        volume_slider.setMinimum(0)
+        volume_slider.setMaximum(100)
+        volume_slider.setValue(int(voice_manager.tts_engine.getProperty('volume') * 100))
+        volume_slider.setTickInterval(10)
+        volume_slider.setTickPosition(QSlider.TicksBelow)
+        layout.addWidget(volume_label)
+        layout.addWidget(volume_slider)
+
+        voice_label = QLabel("Type de voix")
+        voice_combo = QComboBox()
+        voices = voice_manager.tts_engine.getProperty('voices')
+        for v in voices:
+            voice_combo.addItem(v.name, v.id)
+        current_voice_id = voice_manager.tts_engine.getProperty('voice')
+        idx = voice_combo.findData(current_voice_id)
+        if idx >= 0:
+            voice_combo.setCurrentIndex(idx)
+        layout.addWidget(voice_label)
+        layout.addWidget(voice_combo)
+
+        # Mode de reconnaissance
+        mode_label = QLabel("Mode de reconnaissance vocale")
+        mode_combo = QComboBox()
+        mode_combo.addItems(["google", "vosk"])
+        mode_combo.setCurrentText(voice_prefs.get_preference("recognition_mode"))
+        layout.addWidget(mode_label)
+        layout.addWidget(mode_combo)
+
+        # Langue
+        lang_label = QLabel("Langue")
+        lang_edit = QLineEdit()
+        lang_edit.setText(voice_prefs.get_preference("language"))
+        layout.addWidget(lang_label)
+        layout.addWidget(lang_edit)
+
+        # Sensibilité VAD
+        vad_label = QLabel("Sensibilité détection voix (VAD)")
+        vad_slider = QSlider(Qt.Horizontal)
+        vad_slider.setMinimum(0)
+        vad_slider.setMaximum(100)
+        vad_slider.setValue(int(voice_prefs.get_preference("vad_sensitivity") * 100))
+        vad_slider.setTickInterval(5)
+        vad_slider.setTickPosition(QSlider.TicksBelow)
+        layout.addWidget(vad_label)
+        layout.addWidget(vad_slider)
+
+        # Bouton test voix
+        test_btn = QPushButton("Tester la voix")
+        test_btn.setStyleSheet("background: #27ae60; color: white; font-weight: bold; border-radius: 8px; padding: 8px;")
+        layout.addWidget(test_btn)
+
+        # Sauvegarder
+        save_btn = QPushButton("Sauvegarder la configuration")
+        save_btn.setStyleSheet("background: #3498db; color: white; font-weight: bold; border-radius: 8px; padding: 8px;")
+        layout.addWidget(save_btn)
+
+        layout.addStretch()
+
+        # Callbacks
+        def update_voice_settings():
+            voice_manager.tts_engine.setProperty('rate', speed_slider.value())
+            voice_manager.tts_engine.setProperty('volume', volume_slider.value() / 100)
+            selected_voice_id = voice_combo.currentData()
+            voice_manager.tts_engine.setProperty('voice', selected_voice_id)
+            voice_manager.setup_voice_settings()
+            # Préférences
+            voice_prefs.preferences["voice_speed"] = speed_slider.value()
+            voice_prefs.preferences["voice_volume"] = volume_slider.value() / 100
+            voice_prefs.preferences["voice_id"] = selected_voice_id
+            voice_prefs.preferences["recognition_mode"] = mode_combo.currentText()
+            voice_prefs.preferences["language"] = lang_edit.text()
+            voice_prefs.preferences["vad_sensitivity"] = vad_slider.value() / 100
+
+        speed_slider.valueChanged.connect(update_voice_settings)
+        volume_slider.valueChanged.connect(update_voice_settings)
+        voice_combo.currentIndexChanged.connect(update_voice_settings)
+        mode_combo.currentIndexChanged.connect(update_voice_settings)
+        lang_edit.textChanged.connect(update_voice_settings)
+        vad_slider.valueChanged.connect(update_voice_settings)
+
+        def test_voice():
+            update_voice_settings()
+            voice_manager.speak("Ceci est un test de la voix de l'assistant.", async_mode=False)
+
+        test_btn.clicked.connect(test_voice)
+
+        def save_config():
+            update_voice_settings()
+            # Sauvegarde dans le fichier JSON
+            try:
+                import json
+                with open("voice_preferences.json", "w", encoding="utf-8") as f:
+                    json.dump(voice_prefs.preferences, f, ensure_ascii=False, indent=2)
+                QMessageBox.information(self, "Sauvegarde", "Configuration vocale sauvegardée avec succès.")
+            except Exception as e:
+                QMessageBox.warning(self, "Erreur", f"Erreur sauvegarde: {e}")
+
+        save_btn.clicked.connect(save_config)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
