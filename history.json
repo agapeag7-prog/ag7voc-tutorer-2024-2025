@@ -406,5 +406,13 @@
   [
     "il est quelle heure",
     "get_time"
+  ],
+  [
+    "créer un dossier bonjour",
+    "create_folder"
+  ],
+  [
+    "ouvre guide",
+    "launch_app"
   ]
 ]

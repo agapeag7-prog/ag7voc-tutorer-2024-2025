@@ -702,11 +702,24 @@ def rename_file(old_name, new_name):
         speak("Erreur lors du renommage du fichier.")
     ask_feedback()
 
-def move_file(src, dst):
+def move_file(src=None, dst=None):
+    if not src:
+        speak("Quel fichier voulez-vous déplacer ?")
+        src = select_path("open")
+        if not src:
+            feedback(False, "déplacement du fichier")
+            return
+    if not dst:
+        speak("Où voulez-vous déplacer le fichier ?")
+        dst = select_path("select_folder")
+        if not dst:
+            feedback(False, "déplacement du fichier")
+            return
     try:
         if os.path.exists(src):
             import shutil
-            shutil.move(src, dst)
+            dst_path = os.path.join(dst, os.path.basename(src))
+            shutil.move(src, dst_path)
             logging.info(f"Fichier déplacé : {src} -> {dst}")
             speak("Fichier déplacé.")
         else:
@@ -975,6 +988,182 @@ def launch_app(command):
         else:
             speak(f"d'accord")
 
+def confirm_action(message):
+    """Centralise la confirmation vocale pour les actions destructives ou critiques"""
+    speak(message + " Dites oui ou non.")
+    response = listen()
+    return response and "oui" in response.lower()
+
+def feedback(success, operation):
+    """Feedback vocal et affichage pour chaque opération"""
+    if success:
+        msg = f"{operation} réussi."
+        speak(msg)
+        display_on_front(msg)
+    else:
+        msg = f"Erreur lors de {operation}."
+        speak(msg)
+        display_on_front(msg)
+
+def show_suggestions(command):
+    """Affiche les suggestions IA contextuelles dans l’interface"""
+    from ag7voc import get_top_intents_spacy_similarity, INTENT_LABELS_FR
+    suggestions = get_top_intents_spacy_similarity(command)
+    if suggestions:
+        display_on_front("Suggestions IA :")
+        for intent, score in suggestions:
+            label = INTENT_LABELS_FR.get(intent, intent)
+            display_on_front(f"- {label} (score: {score:.2f})")
+
+def select_path(mode="open"):
+    path = open_file_explorer(mode)
+    return path
+
+# Exemple d’utilisation centralisée dans les opérations sur fichiers/dossiers :
+
+def delete_file(filename=None):
+    if not filename:
+        speak("Quel fichier voulez-vous supprimer ?")
+        filename = select_path("open")
+        if not filename:
+            feedback(False, "suppression du fichier")
+            return
+    if os.path.exists(filename):
+        if confirm_action(f"Voulez-vous vraiment supprimer {filename} ?"):
+            try:
+                os.remove(filename)
+                feedback(True, "suppression du fichier")
+            except Exception as e:
+                feedback(False, "suppression du fichier")
+                logging.error(f"Erreur suppression fichier {filename} : {e}")
+        else:
+            speak("Suppression annulée.")
+            display_on_front("Suppression annulée.")
+    else:
+        feedback(False, "suppression du fichier")
+
+def write_file(filename=None, content=None):
+    if not filename:
+        speak("Dans quel fichier voulez-vous écrire ?")
+        filename = select_path("save")
+        if not filename:
+            feedback(False, "écriture du fichier")
+            return
+    if os.path.exists(filename):
+        if not confirm_action(f"Le fichier {filename} existe déjà. Voulez-vous l'écraser ?"):
+            speak("Écriture annulée.")
+            display_on_front("Écriture annulée.")
+            return
+    if not content:
+        speak("Que voulez-vous écrire dans le fichier ?")
+        content = listen()
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(content)
+        feedback(True, "écriture du fichier")
+    except Exception as e:
+        feedback(False, "écriture du fichier")
+        logging.error(f"Erreur écriture fichier {filename} : {e}")
+
+def move_file(src=None, dst=None):
+    if not src:
+        speak("Quel fichier voulez-vous déplacer ?")
+        src = select_path("open")
+        if not src:
+            feedback(False, "déplacement du fichier")
+            return
+    if not dst:
+        speak("Où voulez-vous déplacer le fichier ?")
+        dst = select_path("select_folder")
+        if not dst:
+            feedback(False, "déplacement du fichier")
+            return
+    if os.path.exists(src):
+        if confirm_action(f"Voulez-vous vraiment déplacer {os.path.basename(src)} vers {dst} ?"):
+            try:
+                import shutil
+                dst_path = os.path.join(dst, os.path.basename(src))
+                shutil.move(src, dst_path)
+                feedback(True, "déplacement du fichier")
+            except Exception as e:
+                feedback(False, "déplacement du fichier")
+                logging.error(f"Erreur déplacement fichier {src} : {e}")
+        else:
+            speak("Déplacement annulé.")
+            display_on_front("Déplacement annulé.")
+    else:
+        feedback(False, "déplacement du fichier")
+
+def rename_file(old_name=None, new_name=None):
+    if not old_name:
+        speak("Quel fichier voulez-vous renommer ?")
+        old_name = select_path("open")
+        if not old_name:
+            feedback(False, "renommage du fichier")
+            return
+    if not new_name:
+        speak("Comment voulez-vous le renommer ?")
+        new_name = listen()
+        if not new_name:
+            feedback(False, "renommage du fichier")
+            return
+        directory = os.path.dirname(old_name)
+        new_name = os.path.join(directory, new_name)
+    if os.path.exists(old_name):
+        if confirm_action(f"Voulez-vous vraiment renommer {os.path.basename(old_name)} en {os.path.basename(new_name)} ?"):
+            try:
+                os.rename(old_name, new_name)
+                feedback(True, "renommage du fichier")
+            except Exception as e:
+                feedback(False, "renommage du fichier")
+                logging.error(f"Erreur renommage fichier {old_name} : {e}")
+        else:
+            speak("Renommage annulé.")
+            display_on_front("Renommage annulé.")
+    else:
+        feedback(False, "renommage du fichier")
+
+def create_folder(foldername=None):
+    speak("Où voulez-vous créer le dossier ?")
+    parent_dir = select_path("select_folder")
+    if not parent_dir:
+        feedback(False, "création du dossier")
+        return
+    speak("Comment voulez-vous nommer le dossier ?")
+    foldername = listen()
+    if not foldername:
+        feedback(False, "création du dossier")
+        return
+    folder_path = os.path.join(parent_dir, foldername)
+    if os.path.exists(folder_path):
+        speak("Le dossier existe déjà.")
+        display_on_front("Le dossier existe déjà.")
+        return
+    try:
+        os.makedirs(folder_path)
+        feedback(True, "création du dossier")
+    except Exception as e:
+        feedback(False, "création du dossier")
+        logging.error(f"Erreur création dossier {folder_path} : {e}")
+
+def list_files(path=None):
+    if not path:
+        speak("Quel dossier voulez-vous lister ?")
+        path = select_path("select_folder")
+        if not path:
+            feedback(False, "listage des fichiers")
+            return []
+    try:
+        files = os.listdir(path)
+        display_on_front(f"Fichiers et dossiers dans {path} : {files}")
+        feedback(True, "listage des fichiers")
+        return files
+    except Exception as e:
+        feedback(False, "listage des fichiers")
+        logging.error(f"Erreur listage fichiers dans {path} : {e}")
+        return []
+
+# Exemple d’intégration des suggestions IA après chaque commande
 def process_voice_command(command, forced_intent=None):
     global dqn_agent
     

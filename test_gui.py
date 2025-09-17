@@ -21,7 +21,6 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PyQt5.QtCore import Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve, pyqtSignal, QObject, QPoint
 from PyQt5.QtGui import QFont, QColor, QPalette, QIcon, QLinearGradient, QPainter, QPainterPath, QPixmap, QBrush, QTextCursor, QPen
 
-# Définition des signaux pour la communication thread-safe
 class AssistantSignals(QObject):
     show_suggestions = pyqtSignal(list, str)
     update_display = pyqtSignal(str)
@@ -31,7 +30,6 @@ class AssistantSignals(QObject):
 
 assistant_signals = AssistantSignals()
 
-# Configuration des préférences vocales
 class VoicePreferences:
     def __init__(self):
         self.preferences = {
@@ -46,13 +44,11 @@ class VoicePreferences:
 
 voice_prefs = VoicePreferences()
 
-# Simulation des fonctions manquantes
 def process_voice_command(command, forced_intent=None):
     print(f"Traitement de la commande: {command}")
     if forced_intent:
         print(f"Intention forcée: {forced_intent}")
     
-    # Simulation de quelques commandes de base
     if "heure" in command.lower():
         current_time = time.strftime("%H:%M:%S")
         return f"Il est {current_time}"
@@ -68,7 +64,6 @@ def process_voice_command(command, forced_intent=None):
         return f"J'ai entendu: {command}"
 
 def get_top_intents_spacy_similarity(command):
-    # Simulation de la reconnaissance d'intention
     intents = [
         ("time_query", random.uniform(0.7, 0.9)),
         ("system_info", random.uniform(0.6, 0.8)),
@@ -125,7 +120,6 @@ def get_system_info():
         'process_count': len(psutil.pids())
     }
 
-# Constantes simulées
 COMMAND_HISTORY = []
 INTENT_LABELS_FR = {
     "time_query": "Demande d'heure",
@@ -133,7 +127,6 @@ INTENT_LABELS_FR = {
     "file_operation": "Opération fichier"
 }
 
-# Simulation DQN Agent
 class DQNAgent:
     def __init__(self):
         self.memory = deque(maxlen=2000)
@@ -153,7 +146,6 @@ class DQNAgent:
 
 dqn_agent = DQNAgent()
 
-# Classes d'interface améliorées
 class CircularProgress(QProgressBar):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -166,21 +158,18 @@ class CircularProgress(QProgressBar):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # Draw background circle
         pen = QPen()
         pen.setWidth(6)
         pen.setColor(QColor("#ecf0f1"))
         painter.setPen(pen)
         painter.drawEllipse(3, 3, 74, 74)
         
-        # Draw progress arc
         pen.setColor(QColor("#3498db"))
         painter.setPen(pen)
         
         span_angle = int(16 * 3.6 * self.value())
         painter.drawArc(3, 3, 74, 74, 90 * 16, -span_angle)
         
-        # Draw text
         font = QFont("Segoe UI", 12, QFont.Bold)
         painter.setFont(font)
         painter.setPen(QColor("#2c3e50"))
@@ -256,7 +245,6 @@ class VirtualAssistant(QMainWindow):
         self.batch_size = 32
         self.is_listening = False
         
-        # Connecter les signaux
         assistant_signals.show_suggestions.connect(self.show_suggestions_safe)
         assistant_signals.update_display.connect(self.update_display_safe)
         assistant_signals.update_status.connect(self.update_status_safe)
@@ -267,7 +255,6 @@ class VirtualAssistant(QMainWindow):
         self.initUI()
         self.init_timers()
         
-        # Démarre l'écoute du mot-clé dès le lancement
         self.listening_thread = threading.Thread(target=self.listen_loop, daemon=True)
         self.listening_thread.start()
 
@@ -275,7 +262,6 @@ class VirtualAssistant(QMainWindow):
         self.setWindowTitle('AG7VOC - Assistant Vocal Intelligent')
         self.setWindowIcon(self.style().standardIcon(QStyle.SP_ComputerIcon))
         
-        # Style global de l'application
         self.setStyleSheet("""
             QMainWindow {
                 background: #f5f7fa;
@@ -305,7 +291,6 @@ class VirtualAssistant(QMainWindow):
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Sidebar
         sidebar = QFrame()
         sidebar.setFixedWidth(220)
         sidebar.setStyleSheet("""
@@ -318,7 +303,6 @@ class VirtualAssistant(QMainWindow):
         sidebar_layout.setSpacing(15)
         sidebar_layout.setContentsMargins(15, 20, 15, 20)
         
-        # Logo et titre
         logo_label = QLabel("AG7VOC")
         logo_label.setStyleSheet("""
             QLabel {
@@ -331,7 +315,6 @@ class VirtualAssistant(QMainWindow):
         logo_label.setAlignment(Qt.AlignCenter)
         sidebar_layout.addWidget(logo_label)
         
-        # Menu de navigation
         nav_buttons = [
             ("Tableau de bord", self.show_dashboard),
             ("Commandes", self.show_commands),
@@ -364,7 +347,6 @@ class VirtualAssistant(QMainWindow):
         
         sidebar_layout.addStretch()
         
-        # Status en bas de la sidebar
         status_frame = QFrame()
         status_frame.setStyleSheet("""
             QFrame {
@@ -390,13 +372,11 @@ class VirtualAssistant(QMainWindow):
         
         sidebar_layout.addWidget(status_frame)
         
-        # Contenu principal
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
         content_layout.setSpacing(15)
         content_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Header avec indicateur de statut
         header_frame = QFrame()
         header_frame.setStyleSheet("""
             QFrame {
@@ -425,7 +405,7 @@ class VirtualAssistant(QMainWindow):
         header_layout.addLayout(status_info)
         header_layout.addStretch()
         
-        self.wake_button = ModernButton("🎤 Activer l'écoute", "#27ae60")
+        self.wake_button = ModernButton("Activer l'écoute", "#27ae60")
         self.wake_button.clicked.connect(self.toggle_listening)
         header_layout.addWidget(self.wake_button)
         
@@ -543,7 +523,6 @@ class VirtualAssistant(QMainWindow):
             }
         """)
         
-        # Boutons de contrôle du journal
         control_layout = QHBoxLayout()
         clear_btn = QPushButton("Effacer")
         clear_btn.setStyleSheet("""
@@ -577,7 +556,6 @@ class VirtualAssistant(QMainWindow):
         
         journal_layout.addLayout(journal_header)
         
-        # Zone de texte du journal avec style amélioré
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
         self.output_text.setStyleSheet("""
@@ -593,7 +571,6 @@ class VirtualAssistant(QMainWindow):
         """)
         self.output_text.setMinimumHeight(250)
 
-        # Ajouter un dégradé de fond pour mieux voir les nouveaux messages
         palette = self.output_text.palette()
         gradient = QLinearGradient(0, 0, 0, 400)
         gradient.setColorAt(0, QColor(44, 62, 80))
@@ -604,9 +581,70 @@ class VirtualAssistant(QMainWindow):
         journal_layout.addWidget(self.output_text)
         content_layout.addWidget(journal_frame)
         
-        # Ajouter les sections à la disposition principale
         main_layout.addWidget(sidebar)
         main_layout.addWidget(content_widget)
+
+        history_panel = QFrame()
+        history_panel.setFixedWidth(350)
+        history_panel.setStyleSheet("""
+            QFrame {
+                background: #f8f9fa;
+                border-left: 3px solid #3498db;
+                border-radius: 0 10px 10px 0;
+            }
+        """)
+        history_layout = QVBoxLayout(history_panel)
+        history_layout.setContentsMargins(15, 20, 15, 20)
+        history_layout.setSpacing(10)
+
+        history_title = QLabel("Historique des activités")
+        history_title.setStyleSheet("""
+            QLabel {
+                font-size: 17px;
+                font-weight: bold;
+                color: #3498db;
+                padding-bottom: 8px;
+            }
+        """)
+        history_layout.addWidget(history_title)
+
+        self.output_text.setParent(None)
+        self.output_text.setMinimumHeight(500)
+        self.output_text.setStyleSheet("""
+            QTextEdit {
+                background: #2c3e50;
+                color: #ecf0f1;
+                border: 1px solid #3498db;
+                border-radius: 8px;
+                font-family: 'Consolas', 'Monospace';
+                font-size: 12px;
+                padding: 10px;
+            }
+        """)
+        history_layout.addWidget(self.output_text)
+
+        search_box = QLineEdit()
+        search_box.setPlaceholderText("Rechercher dans l'historique...")
+        search_box.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #3498db;
+                border-radius: 6px;
+                padding: 6px;
+                font-size: 12px;
+            }
+        """)
+        history_layout.addWidget(search_box)
+
+        def filter_history():
+            query = search_box.text().lower()
+            all_text = self.output_text.toPlainText().split('\n')
+            filtered = [line for line in all_text if query in line.lower()]
+            self.output_text.clear()
+            self.output_text.append('\n'.join(filtered) if filtered else "Aucun résultat.")
+
+        search_box.textChanged.connect(filter_history)
+
+        main_layout.addWidget(history_panel)
         
         self.setMinimumSize(1200, 800)
         self.resize(1400, 900)
@@ -614,7 +652,6 @@ class VirtualAssistant(QMainWindow):
         self.redirect_stdout()
         self.setup_tray_icon()
         
-        # Message de bienvenue
         self.afficher_message("=== AG7VOC ASSISTANT VOCAL ===")
         self.afficher_message("Système initialisé avec succès")
         self.afficher_message(f"Agent DQN: {len(self.agent.memory)} expériences chargées")
@@ -641,7 +678,7 @@ class VirtualAssistant(QMainWindow):
     def put_to_sleep(self):
         """Met l'assistant en veille"""
         self.is_awake = False
-        self.update_status("État : En veille", "#e74c3c")
+        self.update_status("État : En veille", "#2c3c")
         self.status_icon.setText("🔴")
         self.status_text.setText("En veille")
         self.wake_button.setText("Activer l'écoute")
@@ -721,7 +758,6 @@ class VirtualAssistant(QMainWindow):
                 time.sleep(1)
 
     def process_command(self, text):
-        """Traite une commande vocale avec toutes les fonctionnalités du backend"""
         try:
             self.afficher_message(f"Commande reçue: {text}")
             self.history.append(text)
@@ -742,13 +778,13 @@ class VirtualAssistant(QMainWindow):
             self.afficher_message(f"Réponse: {response}")
             speak(response)
 
-            # Suggestions IA automatiques APRÈS exécution (optionnel)
-            # suggestions_after = get_top_intents_spacy_similarity(response)
-            # if suggestions_after:
-            #     self.afficher_message("Suggestions IA (après exécution):")
-            #     for intent, score in suggestions_after:
-            #         label = INTENT_LABELS_FR.get(intent, intent)
-            #         self.afficher_message(f"- {label} (score: {score:.2f})")
+            # Suggestions IA automatiques APRÈS exécution
+            suggestions_after = get_top_intents_spacy_similarity(response if response else text)
+            if suggestions_after:
+                self.afficher_message("Suggestions IA (après exécution):")
+                for intent, score in suggestions_after:
+                    label = INTENT_LABELS_FR.get(intent, intent)
+                    self.afficher_message(f"- {label} (score: {score:.2f})")
 
         except Exception as e:
             self.afficher_message(f"Erreur traitement commande: {str(e)}")
@@ -804,7 +840,6 @@ class VirtualAssistant(QMainWindow):
             2000
         )
 
-    # Méthodes pour les différentes vues
     def show_dashboard(self):
         self.afficher_message("Affichage du tableau de bord")
 
@@ -911,7 +946,6 @@ class VirtualAssistant(QMainWindow):
         except Exception as e:
             self.afficher_message(f"Erreur export logs: {str(e)}")
 
-    # Méthodes pour gérer les signaux thread-safe
     def show_suggestions_safe(self, suggestions, original_command):
         QTimer.singleShot(0, lambda: self.show_suggestions(suggestions, original_command))
 
