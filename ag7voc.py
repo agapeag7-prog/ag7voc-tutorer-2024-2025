@@ -189,7 +189,8 @@ INTENTS = {
     ],
     "show_help": [
         "aide", "que peux-tu faire", "aide-moi", "liste des commandes", "comment ça marche", "quelles sont tes fonctions",
-        "quelles sont tes capacités", "quels sont tes services", "quels sont tes outils", "quels sont tes modules"
+        "quelles sont tes capacités", "quels sont tes services", "quels sont tes outils", "quels sont tes modules",
+        "qu'est ce que tu peux faire", "qu'est ce que tu sais faire", "montre-moi l'aide", "affiche l'aide"
     ],
     "launch_app": [
         "ouvre", "ouvrir", "lance", "lancer", "démarre", "démarrer", "start", "open",
@@ -214,7 +215,7 @@ INTENTS = {
         "recherche sur le web", "cherche sur le web", "recherche sur bing", "cherche sur bing", "recherche sur yahoo", "cherche sur yahoo"
     ],
     "send_email": [
-        "envoie un mail", "envoie un email", "envoie un courriel", "envoie un message", "envoie un e-mail",
+        "envoie un mail", "envoie un email", "envoie mail", "envoie un courriel", "envoie un message", "envoie un e-mail",
         "envoie un courrier", "envoie une lettre", "envoie un sms", "envoie un texto"
     ],
     "weather": [
@@ -238,8 +239,8 @@ INTENTS = {
     ],
     
     "select_file": [
-        "sélectionner ce fichier", "choisir ce fichier", "prendre ce fichier",
-        "sélectionner élément", "choisir élément", "prendre élément"
+        "sélectionner ce fichier", "sélectionne le fichier", "choisir ce fichier", "prendre ce fichier",
+        "sélectionner élément", "choisir élément", "prendre élément", "prend ce fichier"
     ],
     
     "navigate_back": [
@@ -293,7 +294,6 @@ class WindowsProgramDetector:
                                 install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0] if winreg.QueryValueEx(subkey, "InstallLocation")[0] else ""
                                 display_icon = winreg.QueryValueEx(subkey, "DisplayIcon")[0] if winreg.QueryValueEx(subkey, "DisplayIcon")[0] else ""
                                 
-                                # Trouver le chemin de l'exécutable
                                 exe_path = self._find_exe_path(install_location, display_icon)
                                 
                                 if display_name and exe_path and os.path.exists(exe_path):
@@ -578,9 +578,6 @@ def modify_event(event_id, new_event):
         logging.error(f"Erreur modification événement : {e}")
         speak("Erreur lors de la modification de l'événement.")
     ask_feedback()
-
-
-
 
 def open_file_explorer(mode="open", initial_path=None):
     """Ouvre l'explorateur de fichiers (fonction helper)"""

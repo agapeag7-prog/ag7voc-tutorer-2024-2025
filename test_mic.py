@@ -7,13 +7,11 @@ def test_microphone():
     try:
         r = sr.Recognizer()
         
-        # Lister les microphones
         print("Microphones disponibles:")
         mics = sr.Microphone.list_microphone_names()
         for i, mic in enumerate(mics):
             print(f"  {i}: {mic}")
         
-        # Test avec le microphone par défaut
         with sr.Microphone() as source:
             print("Calibration du bruit ambiant...")
             r.adjust_for_ambient_noise(source, duration=2)

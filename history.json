@@ -418,5 +418,9 @@
   [
     "ouvre chrome",
     "launch_app"
+  ],
+  [
+    "envoie un mail",
+    "send_email"
   ]
 ]

@@ -1006,7 +1006,7 @@ class VirtualAssistant(QMainWindow):
     def afficher_historique(self):
         self.afficher_message("Historique des commandes:")
         if self.history:
-            for i, cmd in enumerate(self.history[-10:], 1):  # Affiche les 10 dernières
+            for i, cmd in enumerate(self.history[-10:], 1):
                 self.afficher_message(f"{i}. {cmd}")
         else:
             self.afficher_message("Aucune commande enregistrée.")
@@ -1217,7 +1217,7 @@ class VoiceConfigWidget(QWidget):
 
         layout.addStretch()
 
-        # Callbacks
+        # Callbacksr/0
         def update_voice_settings():
             voice_manager.tts_engine.setProperty('rate', speed_slider.value())
             voice_manager.tts_engine.setProperty('volume', volume_slider.value() / 100)
