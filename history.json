@@ -422,5 +422,53 @@
   [
     "envoie un mail",
     "send_email"
+  ],
+  [
+    "envoie mail",
+    "send_email"
+  ],
+  [
+    "cherche les fichiers connaissance",
+    "list_files"
+  ],
+  [
+    "affiche l'historique",
+    "historique"
+  ],
+  [
+    "ouvre geek",
+    "launch_app"
+  ],
+  [
+    "ouvre chrome",
+    "launch_app"
+  ],
+  [
+    "cherche Photoshop",
+    "search_web"
+  ],
+  [
+    "ouvre bloc-notes",
+    "launch_app"
+  ],
+  [
+    "supprimer les fichiers connaissance",
+    "list_files"
+  ],
+  [
+    "qu'est-ce que tu peux faire",
+    "show_help"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
+  ],
+  [
+    "on est quel jour",
+    "get_date"
+  ],
+  [
+    "la date",
+    "get_date"
   ]
 ]
