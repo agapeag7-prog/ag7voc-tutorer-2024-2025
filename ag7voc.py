@@ -249,6 +249,28 @@ INTENTS = {
         "recherche fichier", "recherche de fichier", "trouve fichier", "cherche fichier", "recherche dossier", "trouve dossier", "cherche dossier",
         "trouve document", "cherche document", "recherche dans mes fichiers", "recherche dans mes dossiers", "recherche des dossiers"
     ],
+    
+    "read_after_search": [
+        "lire ce fichier", "ouvrir ce résultat", "afficher le contenu",
+        "montre-moi ce fichier", "voir le résultat", "lire ce document"
+    ],
+    "edit_after_search": [
+        "modifier ce fichier", "éditer ce résultat", "changer ce fichier",
+        "corriger ce document", "ajouter du texte"
+    ],
+    "file_actions": [
+        "actions pour ce fichier", "options pour ce fichier", "que peux-tu faire avec ce fichier",
+        "menu fichier", "opérations sur ce fichier"
+    ],
+    "navigate_results": [
+        "suivant", "résultat suivant", "prochain",
+        "précédent", "résultat précédent", "avant"
+    ],
+    "file_info": [
+        "information sur ce fichier", "détails de ce fichier", "propriétés de ce fichier",
+        "stats de ce fichier", "caractéristiques de ce fichier"
+    ],
+    
     "open_explorer": [
         "ouvrir explorateur", "explorateur fichiers", "navigateur fichiers",
         "voir fichiers", "lister fichiers", "explorer disque",
@@ -269,6 +291,7 @@ INTENTS = {
         "suivant", "avancer", "dossier suivant"
     ],
     
+    
     "confirm_selection": [
         "valider sélection", "confirmer choix", "accepter sélection",
         "choisir ceci", "sélectionner ça", "confirmer"
@@ -283,6 +306,10 @@ COMMAND_HISTORY = []
 IS_AWAKE = True
 WAKE_WORDS = ["assistant", "réveille-toi", "hey assistant"]
 SLEEP_WORDS = ["dors", "va en veille", "arrête d'écouter"]
+
+LAST_SEARCH_RESULTS = []
+LAST_SEARCH_QUERY = ""
+CURRENT_SEARCH_INDEX = 0
 
 class WindowsProgramDetector:
     def __init__(self):
@@ -596,6 +623,663 @@ def modify_event(event_id, new_event):
         speak("Erreur lors de la modification de l'événement.")
     ask_feedback()
 
+def offer_search_actions(results):
+    """Propose des actions après une recherche"""
+    global CURRENT_SEARCH_INDEX
+    
+    if not results:
+        speak("Aucun résultat à afficher.")
+        return None
+    
+    # Afficher le premier résultat
+    CURRENT_SEARCH_INDEX = 0
+    current_result = results[CURRENT_SEARCH_INDEX]
+    is_dir = os.path.isdir(current_result)
+    
+    result_type = "dossier" if is_dir else "fichier"
+    speak(f"Premier {result_type} trouvé: {os.path.basename(current_result)}")
+    display_on_front(f"1/{len(results)}: {os.path.basename(current_result)}")
+    
+    # Proposer des actions
+    speak("Que voulez-vous faire? Vous pouvez dire: lire, ouvrir, suivant, précédent, ou actions pour plus d'options.")
+    action = listen()
+    
+    if action:
+        if "lire" in action.lower() and not is_dir:
+            return read_file_after_search(current_result)
+        elif "ouvrir" in action.lower():
+            return open_file_default(current_result)
+        elif "suivant" in action.lower() and len(results) > 1:
+            CURRENT_SEARCH_INDEX = (CURRENT_SEARCH_INDEX + 1) % len(results)
+            return offer_search_actions(results)
+        elif "précédent" in action.lower() and len(results) > 1:
+            CURRENT_SEARCH_INDEX = (CURRENT_SEARCH_INDEX - 1) % len(results)
+            return offer_search_actions(results)
+        elif "actions" in action.lower() or "option" in action.lower():
+            return offer_file_actions(current_result)
+        elif "recherche" in action.lower() or "nouveau" in action.lower():
+            return search_files_vocal()
+        else:
+            speak("Action non reconnue. Veuillez réessayer.")
+            return offer_search_actions(results)
+    
+    return None
+
+def offer_file_actions(file_path):
+    """Propose des actions sur un fichier spécifique"""
+    is_dir = os.path.isdir(file_path)
+    file_name = os.path.basename(file_path)
+    
+    speak(f"Options pour {file_name}. Que voulez-vous faire?")
+    
+    if is_dir:
+        actions = [
+            ("ouvrir", "Ouvrir le dossier"),
+            ("lister", "Lister le contenu"),
+            ("rechercher", "Rechercher dans ce dossier"),
+            ("retour", "Retour aux résultats")
+        ]
+    else:
+        # Détecter le type de fichier
+        file_ext = os.path.splitext(file_path)[1].lower()
+        
+        actions = [
+            ("lire", "Lire le contenu"),
+            ("ouvrir", "Ouvrir avec l'application par défaut"),
+            ("modifier", "Modifier le fichier"),
+            ("renommer", "Renommer le fichier"),
+            ("copier", "Copier le fichier"),
+            ("déplacer", "Déplacer le fichier"),
+            ("supprimer", "Supprimer le fichier"),
+            ("info", "Informations sur le fichier"),
+            ("retour", "Retour aux résultats")
+        ]
+        
+        # Actions spécifiques selon le type de fichier
+        if file_ext in ['.txt', '.csv', '.json', '.xml']:
+            actions.insert(2, ("analyser", "Analyser le contenu"))
+        elif file_ext in ['.pdf']:
+            actions.insert(1, ("résumer", "Résumer le document"))
+    
+    # Énoncer les options disponibles
+    options_text = "Options: "
+    for i, (action, description) in enumerate(actions, 1):
+        options_text += f"{i}. {description}. "
+        if i % 3 == 0:  # Limiter la longueur des phrases
+            speak(options_text)
+            options_text = ""
+    
+    if options_text:
+        speak(options_text)
+    
+    speak("Dites le numéro de l'action ou son nom.")
+    choice = listen()
+    
+    if choice:
+        # Gestion par numéro
+        if choice.isdigit():
+            index = int(choice) - 1
+            if 0 <= index < len(actions):
+                action = actions[index][0]
+            else:
+                speak("Numéro invalide.")
+                return offer_file_actions(file_path)
+        # Gestion par nom d'action
+        else:
+            action = None
+            for a, desc in actions:
+                if a in choice.lower():
+                    action = a
+                    break
+            
+            if not action:
+                speak("Action non reconnue.")
+                return offer_file_actions(file_path)
+        
+        # Exécuter l'action
+        if action == "lire":
+            return read_file_after_search(file_path)
+        elif action == "ouvrir":
+            return open_file_default(file_path)
+        elif action == "modifier":
+            return edit_file_after_search(file_path)
+        elif action == "renommer":
+            return rename_file_after_search(file_path)
+        elif action == "copier":
+            return copy_file_after_search(file_path)
+        elif action == "déplacer":
+            return move_file_after_search(file_path)
+        elif action == "supprimer":
+            return delete_file_after_search(file_path)
+        elif action == "info":
+            return get_file_info(file_path)
+        elif action == "analyser":
+            return analyze_file_content(file_path)
+        elif action == "résumer":
+            return summarize_document(file_path)
+        elif action == "lister":
+            return list_directory_content(file_path)
+        elif action == "rechercher":
+            speak("Que voulez-vous rechercher dans ce dossier?")
+            new_query = listen()
+            if new_query:
+                return search_files_vocal_in_directory(file_path, new_query)
+        elif action == "retour":
+            return offer_search_actions(LAST_SEARCH_RESULTS)
+    
+    return file_path
+
+def read_file_after_search(file_path):
+    """Lit un fichier après une recherche"""
+    try:
+        if os.path.isdir(file_path):
+            speak("C'est un dossier, je ne peux pas lire son contenu directement.")
+            return file_path
+            
+        # Vérifier la taille du fichier
+        file_size = os.path.getsize(file_path)
+        if file_size > 5 * 1024 * 1024:  # 5MB
+            speak("Ce fichier est trop volumineux pour être lu. Voulez-vous l'ouvrir avec une application?")
+            response = listen()
+            if response and "oui" in response.lower():
+                return open_file_default(file_path)
+            return file_path
+        
+        # Détecter le type de fichier pour une lecture adaptée
+        file_ext = os.path.splitext(file_path)[1].lower()
+        
+        if file_ext == '.pdf':
+            return read_pdf_file(file_path)
+        elif file_ext in ['.txt', '.csv', '.json', '.xml', '.py', '.js', '.html', '.css']:
+            return read_text_file(file_path)
+        else:
+            speak("Je ne peux pas lire ce type de fichier directement. Voulez-vous l'ouvrir avec une application?")
+            response = listen()
+            if response and "oui" in response.lower():
+                return open_file_default(file_path)
+            return file_path
+        
+    except Exception as e:
+        speak(f"Impossible de lire le fichier: {str(e)}")
+        return file_path
+
+def read_text_file(file_path):
+    """Lit un fichier texte"""
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        
+        # Limiter la lecture pour les gros fichiers
+        if len(content) > 2000:
+            speak("Le fichier est long. Je vais lire les premières lignes.")
+            preview = content[:2000] + "..."
+            display_on_front(f"Contenu de {os.path.basename(file_path)} (extrait):\n{preview}")
+        else:
+            display_on_front(f"Contenu de {os.path.basename(file_path)}:\n{content}")
+        
+        speak("Voici le contenu du fichier. Je vais en lire une partie.")
+        
+        # Lecture vocale des premières lignes
+        lines = content.split('\n')
+        lines_to_read = min(10, len(lines))
+        
+        for i in range(lines_to_read):
+            if lines[i].strip():
+                # Ne pas lire les lignes trop longues
+                if len(lines[i]) > 200:
+                    speak(f"Ligne {i+1} contient beaucoup de texte.")
+                else:
+                    speak(f"Ligne {i+1}: {lines[i].strip()}")
+        
+        # Proposer de continuer
+        if len(lines) > lines_to_read:
+            speak("Voulez-vous que je continue la lecture?")
+            response = listen()
+            if response and "oui" in response.lower():
+                for i in range(lines_to_read, min(lines_to_read + 10, len(lines))):
+                    if lines[i].strip():
+                        speak(f"Ligne {i+1}: {lines[i].strip()}")
+        
+        return file_path
+        
+    except Exception as e:
+        speak(f"Impossible de lire le fichier: {str(e)}")
+        return file_path
+
+def read_pdf_file(file_path):
+    """Tente de lire un fichier PDF"""
+    try:
+        # Essayer d'importer PyPDF2 pour lire les PDF
+        try:
+            import PyPDF2
+        except ImportError:
+            speak("La lecture de PDF nécessite le module PyPDF2. Voulez-vous l'installer?")
+            response = listen()
+            if response and "oui" in response.lower():
+                import subprocess
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "PyPDF2"])
+                import PyPDF2
+            else:
+                speak("Je ne peux pas lire le PDF sans PyPDF2. Voulez-vous l'ouvrir avec une application?")
+                response = listen()
+                if response and "oui" in response.lower():
+                    return open_file_default(file_path)
+                return file_path
+        
+        # Lire le PDF
+        with open(file_path, 'rb') as f:
+            pdf_reader = PyPDF2.PdfReader(f)
+            if len(pdf_reader.pages) == 0:
+                speak("Le PDF est vide ou corrompu.")
+                return file_path
+            
+            # Lire les premières pages
+            speak(f"Le PDF contient {len(pdf_reader.pages)} pages. Je vais lire les premières.")
+            
+            text = ""
+            pages_to_read = min(3, len(pdf_reader.pages))
+            
+            for i in range(pages_to_read):
+                page = pdf_reader.pages[i]
+                text += page.extract_text() + "\n"
+            
+            if text.strip():
+                # Limiter la lecture
+                if len(text) > 1500:
+                    text = text[:1500] + "..."
+                
+                display_on_front(f"Contenu du PDF {os.path.basename(file_path)} (extrait):\n{text}")
+                speak("Voici un extrait du PDF:")
+                
+                # Lire par paragraphes
+                paragraphs = [p for p in text.split('\n\n') if p.strip()]
+                for i, para in enumerate(paragraphs[:3]):
+                    if para.strip():
+                        speak(f"Paragraphe {i+1}: {para.strip()}")
+            else:
+                speak("Je n'ai pas pu extraire de texte de ce PDF. Il est peut-être scanné ou crypté.")
+        
+        return file_path
+        
+    except Exception as e:
+        speak(f"Impossible de lire le PDF: {str(e)}")
+        return file_path
+
+def edit_file_after_search(file_path):
+    """Modifie un fichier après une recherche"""
+    try:
+        if os.path.isdir(file_path):
+            speak("C'est un dossier, je ne peux pas le modifier.")
+            return file_path
+        
+        # Vérifier que le fichier est modifiable
+        file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext in ['.exe', '.dll', '.sys', '.bin']:
+            speak("Ce type de fichier ne peut pas être modifié pour des raisons de sécurité.")
+            return file_path
+            
+        # Lire le contenu actuel
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                current_content = f.read()
+        except UnicodeDecodeError:
+            speak("Ce fichier n'est pas un fichier texte modifiable.")
+            return file_path
+        
+        display_on_front(f"Contenu actuel de {os.path.basename(file_path)}:\n{current_content[:500]}{'...' if len(current_content) > 500 else ''}")
+        
+        speak("Que voulez-vous faire? Vous pouvez: ajouter du texte à la fin, remplacer tout le contenu, ou insérer à une position spécifique.")
+        action = listen()
+        
+        if action and "ajouter" in action.lower():
+            speak("Que voulez-vous ajouter à la fin du fichier?")
+            new_content = listen()
+            if new_content:
+                with open(file_path, 'a', encoding='utf-8') as f:
+                    f.write("\n" + new_content)
+                speak("Contenu ajouté avec succès.")
+                
+        elif action and "remplacer" in action.lower():
+            speak("Quel est le nouveau contenu?")
+            new_content = listen()
+            if new_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                speak("Fichier remplacé avec succès.")
+                
+        elif action and "insérer" in action.lower():
+            speak("À quelle ligne voulez-vous insérer du texte? Dites le numéro ou 'au début'.")
+            position = listen()
+            
+            if position:
+                lines = current_content.split('\n')
+                
+                if position.isdigit():
+                    line_num = int(position) - 1
+                    if 0 <= line_num <= len(lines):
+                        speak("Que voulez-vous insérer à cette position?")
+                        insert_content = listen()
+                        if insert_content:
+                            lines.insert(line_num, insert_content)
+                            with open(file_path, 'w', encoding='utf-8') as f:
+                                f.write('\n'.join(lines))
+                            speak("Contenu inséré avec succès.")
+                    else:
+                        speak("Numéro de ligne invalide.")
+                elif "début" in position.lower():
+                    speak("Que voulez-vous insérer au début?")
+                    insert_content = listen()
+                    if insert_content:
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write(insert_content + '\n' + current_content)
+                        speak("Contenu inséré au début avec succès.")
+                else:
+                    speak("Position non reconnue.")
+        else:
+            speak("Modification annulée.")
+            
+        return file_path
+        
+    except Exception as e:
+        speak(f"Impossible de modifier le fichier: {str(e)}")
+        return file_path
+
+def open_file_default(file_path):
+    """Ouvre un fichier avec l'application par défaut"""
+    try:
+        if os.path.isdir(file_path):
+            os.startfile(file_path)
+            speak("Dossier ouvert.")
+        else:
+            os.startfile(file_path)
+            speak("Fichier ouvert avec l'application par défaut.")
+        return file_path
+    except Exception as e:
+        speak(f"Impossible d'ouvrir le fichier: {str(e)}")
+        return file_path
+
+def get_file_info(file_path):
+    """Affiche des informations sur le fichier"""
+    try:
+        stat = os.stat(file_path)
+        size = stat.st_size
+        mtime = datetime.fromtimestamp(stat.st_mtime)
+        ctime = datetime.fromtimestamp(stat.st_ctime)
+        
+        size_str = ""
+        if size < 1024:
+            size_str = f"{size} octets"
+        elif size < 1024 * 1024:
+            size_str = f"{size/1024:.1f} Ko"
+        else:
+            size_str = f"{size/(1024*1024):.1f} Mo"
+        
+        is_dir = os.path.isdir(file_path)
+        file_type = "Dossier" if is_dir else "Fichier"
+        
+        info_text = f"""
+        {file_type}: {os.path.basename(file_path)}
+        Chemin: {file_path}
+        Taille: {size_str}
+        Créé le: {ctime.strftime('%d/%m/%Y à %H:%M')}
+        Modifié le: {mtime.strftime('%d/%m/%Y à %H:%M')}
+        """
+        
+        display_on_front(info_text)
+        speak(f"Informations sur {os.path.basename(file_path)}: {file_type}, taille {size_str}, modifié le {mtime.strftime('%d %m %Y')}.")
+        
+        return file_path
+        
+    except Exception as e:
+        speak(f"Impossible d'obtenir les informations du fichier: {str(e)}")
+        return file_path
+
+def analyze_file_content(file_path):
+    """Analyse le contenu d'un fichier"""
+    try:
+        if os.path.isdir(file_path):
+            speak("C'est un dossier, pas un fichier à analyser.")
+            return file_path
+            
+        file_ext = os.path.splitext(file_path)[1].lower()
+        
+        if file_ext == '.csv':
+            return analyze_csv_file(file_path)
+        elif file_ext in ['.txt', '.json', '.xml']:
+            return analyze_text_file(file_path)
+        else:
+            speak("Je ne peux pas analyser ce type de fichier.")
+            return file_path
+            
+    except Exception as e:
+        speak(f"Impossible d'analyser le fichier: {str(e)}")
+        return file_path
+
+def analyze_csv_file(file_path):
+    """Analyse un fichier CSV"""
+    try:
+        import csv
+        
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            # Détecter le dialecte CSV
+            try:
+                dialect = csv.Sniffer().sniff(f.read(1024))
+                f.seek(0)
+            except:
+                dialect = csv.excel
+                
+            reader = csv.reader(f, dialect)
+            rows = list(reader)
+            
+            if not rows:
+                speak("Le fichier CSV est vide.")
+                return file_path
+                
+            headers = rows[0] if rows else []
+            row_count = len(rows) - 1 if headers else len(rows)
+            
+            analysis = f"""
+            Fichier CSV: {os.path.basename(file_path)}
+            Lignes: {row_count}
+            Colonnes: {len(headers)}
+            En-têtes: {', '.join(headers)}
+            """
+            
+            display_on_front(analysis)
+            speak(f"Le fichier CSV contient {row_count} lignes et {len(headers)} colonnes. Les en-têtes sont: {', '.join(headers)}.")
+            
+            # Afficher un aperçu des données
+            if row_count > 0:
+                speak("Voici un aperçu des premières lignes:")
+                preview_lines = min(3, row_count)
+                for i in range(1, preview_lines + 1):
+                    if i < len(rows):
+                        row_preview = ", ".join(rows[i][:3])  # Premières 3 colonnes
+                        if len(rows[i]) > 3:
+                            row_preview += ", ..."
+                        speak(f"Ligne {i}: {row_preview}")
+            
+        return file_path
+        
+    except Exception as e:
+        speak(f"Impossible d'analyser le CSV: {str(e)}")
+        return file_path
+
+def analyze_text_file(file_path):
+    """Analyse un fichier texte"""
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+            
+        # Statistiques de base
+        lines = content.split('\n')
+        words = content.split()
+        characters = len(content)
+        
+        analysis = f"""
+        Fichier: {os.path.basename(file_path)}
+        Lignes: {len(lines)}
+        Mots: {len(words)}
+        Caractères: {characters}
+        """
+        
+        display_on_front(analysis)
+        speak(f"Le fichier contient {len(lines)} lignes, {len(words)} mots et {characters} caractères.")
+        
+        # Rechercher des motifs courants
+        if any(email in content for email in ['@', '.com', '.fr']):
+            speak("Le fichier semble contenir des adresses email.")
+        
+        if any(phone in content for phone in ['+33', '01', '02', '03', '04', '05', '06', '07']):
+            speak("Le fichier semble contenir des numéros de téléphone.")
+            
+        return file_path
+        
+    except Exception as e:
+        speak(f"Impossible d'analyser le fichier texte: {str(e)}")
+        return file_path
+
+def summarize_document(file_path):
+    """Tente de résumer un document"""
+    try:
+        file_ext = os.path.splitext(file_path)[1].lower()
+        
+        if file_ext == '.pdf':
+            # Pour PDF, on utilise la même méthode que read_pdf_file
+            try:
+                import PyPDF2
+                with open(file_path, 'rb') as f:
+                    pdf_reader = PyPDF2.PdfReader(f)
+                    if len(pdf_reader.pages) == 0:
+                        speak("Le PDF est vide ou corrompu.")
+                        return file_path
+                    
+                    # Extraire le texte des premières pages
+                    text = ""
+                    for i in range(min(5, len(pdf_reader.pages))):
+                        page = pdf_reader.pages[i]
+                        text += page.extract_text() + "\n"
+                    
+                    if text.strip():
+                        # Créer un résumé très basique (premières phrases)
+                        sentences = text.split('.')
+                        summary = '.'.join(sentences[:3]) + '.' if len(sentences) > 3 else text
+                        
+                        display_on_front(f"Résumé de {os.path.basename(file_path)}:\n{summary}")
+                        speak("Voici un résumé du document:")
+                        speak(summary)
+                    else:
+                        speak("Je n'ai pas pu extraire de texte pour créer un résumé.")
+            except:
+                speak("Je ne peux pas résumer ce PDF. Voulez-vous l'ouvrir avec une application?")
+        
+        elif file_ext in ['.txt', '.csv', '.json', '.xml']:
+            # Pour les fichiers texte, lire les premières lignes
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+                
+            # Prendre les premières lignes comme résumé
+            lines = content.split('\n')
+            summary_lines = min(10, len(lines))
+            summary = '\n'.join(lines[:summary_lines])
+            
+            if len(lines) > summary_lines:
+                summary += "\n..."
+                
+            display_on_front(f"Résumé de {os.path.basename(file_path)}:\n{summary}")
+            speak("Voici le début du document:")
+            
+            # Lire les premières lignes
+            for i in range(min(5, len(lines))):
+                if lines[i].strip():
+                    speak(f"Ligne {i+1}: {lines[i].strip()}")
+        
+        else:
+            speak("Je ne peux pas résumer ce type de fichier.")
+            
+        return file_path
+        
+    except Exception as e:
+        speak(f"Impossible de résumer le document: {str(e)}")
+        return file_path
+
+def list_directory_content(directory_path):
+    """Liste le contenu d'un dossier"""
+    try:
+        if not os.path.isdir(directory_path):
+            speak("Ce n'est pas un dossier valide.")
+            return directory_path
+            
+        items = os.listdir(directory_path)
+        if not items:
+            speak("Le dossier est vide.")
+            return directory_path
+            
+        files = []
+        folders = []
+        
+        for item in items:
+            item_path = os.path.join(directory_path, item)
+            if os.path.isdir(item_path):
+                folders.append(item)
+            else:
+                files.append(item)
+                
+        speak(f"Le dossier contient {len(folders)} sous-dossiers et {len(files)} fichiers.")
+        
+        # Afficher les dossiers
+        if folders:
+            speak("Sous-dossiers:")
+            for i, folder in enumerate(folders[:5]):
+                speak(f"{i+1}. {folder}")
+            if len(folders) > 5:
+                speak(f"Et {len(folders) - 5} autres dossiers.")
+                
+        # Afficher les fichiers
+        if files:
+            speak("Fichiers:")
+            for i, file in enumerate(files[:5]):
+                speak(f"{i+1}. {file}")
+            if len(files) > 5:
+                speak(f"Et {len(files) - 5} autres fichiers.")
+                
+        display_on_front(f"Contenu de {os.path.basename(directory_path)}:\n\nDossiers: {', '.join(folders[:10])}\n\nFichiers: {', '.join(files[:10])}")
+        
+        return directory_path
+        
+    except Exception as e:
+        speak(f"Impossible de lister le contenu du dossier: {str(e)}")
+        return directory_path
+
+def search_files_vocal_in_directory(directory_path, query):
+    """Recherche dans un dossier spécifique"""
+    global LAST_SEARCH_RESULTS, LAST_SEARCH_QUERY, CURRENT_SEARCH_INDEX
+    
+    if not os.path.isdir(directory_path):
+        speak("Ce n'est pas un dossier valide.")
+        return None
+        
+    LAST_SEARCH_QUERY = query
+    CURRENT_SEARCH_INDEX = 0
+
+    speak(f"Recherche de '{query}' en cours dans {os.path.basename(directory_path)}...")
+    results = []
+    for root, dirs, files in os.walk(directory_path):
+        for name in files + dirs:
+            if query.lower() in name.lower():
+                results.append(os.path.join(root, name))
+        if len(results) > 50:
+            break
+
+    LAST_SEARCH_RESULTS = results
+
+    if results:
+        speak(f"J'ai trouvé {len(results)} résultats dans ce dossier.")
+        return offer_search_actions(results)
+    else:
+        speak("Aucun résultat trouvé dans ce dossier.")
+        return None
+
 def open_file_explorer(mode="open", initial_path=None):
     from PyQt5.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
@@ -761,6 +1445,133 @@ def move_file_with_gui(src=None, dst=None):
             
     except Exception as e:
         speak(f"Erreur déplacement fichier: {e}")
+
+def rename_file_after_search(file_path):
+    """Renomme un fichier après une recherche"""
+    try:
+        if os.path.isdir(file_path):
+            speak("C'est un dossier. Comment voulez-vous le renommer?")
+        else:
+            speak("Comment voulez-vous renommer ce fichier?")
+            
+        new_name = listen()
+        if new_name:
+            directory = os.path.dirname(file_path)
+            new_path = os.path.join(directory, new_name)
+            
+            if os.path.exists(new_path):
+                speak("Un élément avec ce nom existe déjà. Voulez-vous le remplacer?")
+                response = listen()
+                if not response or "non" in response.lower():
+                    speak("Renommage annulé.")
+                    return file_path
+                    
+            os.rename(file_path, new_path)
+            speak("Élément renommé avec succès.")
+            return new_path
+        else:
+            speak("Renommage annulé.")
+            return file_path
+            
+    except Exception as e:
+        speak(f"Impossible de renommer: {str(e)}")
+        return file_path
+
+def copy_file_after_search(file_path):
+    """Copie un fichier après une recherche"""
+    try:
+        if os.path.isdir(file_path):
+            speak("Où voulez-vous copier ce dossier?")
+        else:
+            speak("Où voulez-vous copier ce fichier?")
+            
+        speak("Dites le chemin du dossier de destination.")
+        dest_dir = listen()
+        
+        if not dest_dir or not os.path.isdir(dest_dir):
+            speak("Dossier de destination invalide.")
+            return file_path
+            
+        dest_path = os.path.join(dest_dir, os.path.basename(file_path))
+        
+        if os.path.exists(dest_path):
+            speak("Un élément avec ce nom existe déjà dans la destination. Voulez-vous le remplacer?")
+            response = listen()
+            if not response or "non" in response.lower():
+                speak("Copie annulée.")
+                return file_path
+                
+        import shutil
+        if os.path.isdir(file_path):
+            shutil.copytree(file_path, dest_path)
+        else:
+            shutil.copy2(file_path, dest_path)
+            
+        speak("Élément copié avec succès.")
+        return file_path
+        
+    except Exception as e:
+        speak(f"Impossible de copier: {str(e)}")
+        return file_path
+
+def move_file_after_search(file_path):
+    """Déplace un fichier après une recherche"""
+    try:
+        if os.path.isdir(file_path):
+            speak("Où voulez-vous déplacer ce dossier?")
+        else:
+            speak("Où voulez-vous déplacer ce fichier?")
+            
+        speak("Dites le chemin du dossier de destination.")
+        dest_dir = listen()
+        
+        if not dest_dir or not os.path.isdir(dest_dir):
+            speak("Dossier de destination invalide.")
+            return file_path
+            
+        dest_path = os.path.join(dest_dir, os.path.basename(file_path))
+        
+        if os.path.exists(dest_path):
+            speak("Un élément avec ce nom existe déjà dans la destination. Voulez-vous le remplacer?")
+            response = listen()
+            if not response or "non" in response.lower():
+                speak("Déplacement annulé.")
+                return file_path
+                
+        import shutil
+        shutil.move(file_path, dest_path)
+            
+        speak("Élément déplacé avec succès.")
+        return dest_path
+        
+    except Exception as e:
+        speak(f"Impossible de déplacer: {str(e)}")
+        return file_path
+
+def delete_file_after_search(file_path):
+    """Supprime un fichier après une recherche"""
+    try:
+        if os.path.isdir(file_path):
+            speak(f"Voulez-vous vraiment supprimer le dossier {os.path.basename(file_path)} et tout son contenu?")
+        else:
+            speak(f"Voulez-vous vraiment supprimer le fichier {os.path.basename(file_path)}?")
+            
+        response = listen()
+        if response and "oui" in response.lower():
+            import shutil
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+            else:
+                os.remove(file_path)
+            speak("Élément supprimé avec succès.")
+            return None
+        else:
+            speak("Suppression annulée.")
+            return file_path
+            
+    except Exception as e:
+        speak(f"Impossible de supprimer: {str(e)}")
+        return file_path
 
 def rename_file_with_gui(old_name=None, new_name=None):
     """Renomme un fichier avec interface graphique"""
@@ -1216,6 +2027,40 @@ def process_voice_command(command, forced_intent=None):
                 modify_event(int(event_id), new_event)
             else:
                 speak("Veuillez préciser l'identifiant et le nouveau texte.")
+        elif intent == "read_after_search":
+            if LAST_SEARCH_RESULTS and CURRENT_SEARCH_INDEX < len(LAST_SEARCH_RESULTS):
+                read_file_after_search(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])
+            else:
+                speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+        
+        elif intent == "edit_after_search":
+            if LAST_SEARCH_RESULTS and CURRENT_SEARCH_INDEX < len(LAST_SEARCH_RESULTS):
+                edit_file_after_search(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])
+            else:
+                speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+        
+        elif intent == "file_actions":
+            if LAST_SEARCH_RESULTS and CURRENT_SEARCH_INDEX < len(LAST_SEARCH_RESULTS):
+                offer_file_actions(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])
+            else:
+                speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+        
+        elif intent == "navigate_results":
+            if LAST_SEARCH_RESULTS:
+                if "suivant" in command or "prochain" in command:
+                    CURRENT_SEARCH_INDEX = (CURRENT_SEARCH_INDEX + 1) % len(LAST_SEARCH_RESULTS)
+                    speak(f"Résultat {CURRENT_SEARCH_INDEX + 1} sur {len(LAST_SEARCH_RESULTS)}: {os.path.basename(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])}")
+                elif "précédent" in command or "avant" in command:
+                    CURRENT_SEARCH_INDEX = (CURRENT_SEARCH_INDEX - 1) % len(LAST_SEARCH_RESULTS)
+                    speak(f"Résultat {CURRENT_SEARCH_INDEX + 1} sur {len(LAST_SEARCH_RESULTS)}: {os.path.basename(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])}")
+            else:
+                speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+        
+        elif intent == "file_info":
+            if LAST_SEARCH_RESULTS and CURRENT_SEARCH_INDEX < len(LAST_SEARCH_RESULTS):
+                get_file_info(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])
+            else:
+                speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
         elif intent == "search_files":
             search_files_vocal()
         elif intent == "read_file":
@@ -1513,12 +2358,16 @@ def get_history():
 LAST_SEARCH_PATH = None
 
 def search_files_vocal():
-    global LAST_SEARCH_PATH
+    global LAST_SEARCH_RESULTS, LAST_SEARCH_QUERY, CURRENT_SEARCH_INDEX
+    
     speak("Quel nom de fichier ou dossier voulez-vous rechercher ?")
     query = listen()
     if not query:
         speak("Recherche annulée.")
         return None
+
+    LAST_SEARCH_QUERY = query
+    CURRENT_SEARCH_INDEX = 0
 
     speak("Dans quel dossier voulez-vous effectuer la recherche ? Dites le chemin ou laissez vide pour tout le disque.")
     folder = listen()
@@ -1542,18 +2391,11 @@ def search_files_vocal():
         if len(results) > 50:
             break
 
+    LAST_SEARCH_RESULTS = results
+
     if results:
-        path = results[0]
-        speak(f"Premier résultat trouvé : {path}")
-        display_on_front(path)
-        # Ouvre l'explorateur à l'endroit du résultat
-        if os.path.isdir(path):
-            os.system(f'explorer "{path}"')
-            LAST_SEARCH_PATH = path
-        else:
-            os.system(f'explorer /select,"{path}"')
-            LAST_SEARCH_PATH = os.path.dirname(path)
-        return path
+        speak(f"J'ai trouvé {len(results)} résultats.")
+        return offer_search_actions(results)
     else:
         speak("Aucun résultat trouvé.")
         return None
