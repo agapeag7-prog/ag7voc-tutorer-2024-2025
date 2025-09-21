@@ -470,5 +470,89 @@
   [
     "la date",
     "get_date"
+  ],
+  [
+    "cherche sur Youtube Peyton",
+    "search_web"
+  ],
+  [
+    "verrouille la machine",
+    "lock"
+  ],
+  [
+    "la mousse",
+    "lock"
+  ],
+  [
+    "envoie un mail",
+    "send_email"
+  ],
+  [
+    "de la voix de l'assistant",
+    "show_events"
+  ],
+  [
+    "mise en veille",
+    "navigate_back"
+  ],
+  [
+    "créer dossier bonjour",
+    "add_event"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
+  ],
+  [
+    "on est quel jour",
+    "get_date"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "cherche document",
+    "search_files"
+  ],
+  [
+    "ouvre vscode",
+    "launch_app"
+  ],
+  [
+    "ouvre Excel",
+    "launch_app"
+  ],
+  [
+    "des places afficher",
+    "historique"
+  ],
+  [
+    "recherche les dossiers",
+    "list_files"
+  ],
+  [
+    "cherche document",
+    "search_files"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "lis les fichiers connaissance",
+    "list_files"
+  ],
+  [
+    "ouvre mes fichiers connaissance",
+    "search_files"
+  ],
+  [
+    "cherche sur internet Tesla",
+    "search_web"
+  ],
+  [
+    "ouvre le web",
+    "search_web"
   ]
 ]

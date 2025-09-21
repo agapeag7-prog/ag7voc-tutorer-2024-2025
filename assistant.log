@@ -333,3 +333,7 @@ TypeError: create() missing 1 required positional argument: 'access_key'
 2025-09-13 21:32:30,999 [INFO] Feedback utilisateur : Non
 2025-09-13 21:32:43,544 [INFO] Événement ajouté : 2025-09-13 - créer dossier bonjour
 2025-09-13 21:32:58,814 [INFO] Feedback utilisateur : Non
+2025-09-20 18:52:25,241 [INFO] Affichage des événements réussi.
+2025-09-20 18:52:33,032 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-21 10:56:05,169 [INFO] Événement ajouté : 2025-09-21 - créer dossier bonjour
+2025-09-21 10:56:33,701 [INFO] Feedback utilisateur : Non

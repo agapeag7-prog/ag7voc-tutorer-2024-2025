@@ -23,6 +23,9 @@ from PyQt5.QtGui import QFont, QColor, QPalette, QIcon, QLinearGradient, QPainte
 
 from ai_engine import dqn_agent
 
+from voice_manager import voice_manager
+from voice_preferences import voice_prefs
+
 import matplotlib
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -1113,13 +1116,19 @@ class VirtualAssistant(QMainWindow):
                 candidates = [(b, count) for (a, b), count in sequence_counts.items() if a == last_intent]
                 if candidates:
                     next_intent, _ = max(candidates, key=lambda x: x[1])
+                    if self.last_suggested_intent == next_intent:
+                        return
+                    self.last_suggested_intent = next_intent
                     from ag7voc import INTENT_LABELS_FR
                     label_fr = INTENT_LABELS_FR.get(next_intent, next_intent)
                     self.afficher_message(f"Suggestion IA : Après cette commande, vous exécutez souvent '{label_fr}'. Voulez-vous la lancer ?")
                     speak(f"Voulez-vous que je lance la commande suivante : {label_fr} ?")
                     answer = listen(timeout=5)
                     if answer and "oui" in answer.lower():
-                        self.call_intent_command(next_intent)
+                        if next_intent not in ["shutdown", "restart"]:
+                            self.call_intent_command(next_intent)
+                        else:
+                            self.afficher_message("Action critique non exécutée automatiquement.")
         except Exception as e:
             print(f"Erreur analyse automatisation : {e}")
     

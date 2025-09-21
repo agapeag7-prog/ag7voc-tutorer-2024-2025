@@ -35,6 +35,15 @@ from voice_manager import voice_manager
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
+FORBIDDEN_FOLDERS = [
+    "C:\\Windows",
+    "C:\\Program Files",
+    "C:\\Program Files (x86)",
+    "C:\\Users\\Default",
+    "C:\\$Recycle.Bin",
+    "C:\\System Volume Information"
+]
+
 class AssistantSignals(QObject):
     show_suggestions = pyqtSignal(object, object)
     update_display = pyqtSignal(object)
@@ -113,6 +122,7 @@ INTENT_LABELS_FR = {
     "list_files": "Lister les fichiers",
     "rename_file": "Renommer un fichier",
     "move_file": "Déplacer un fichier",
+    "search_files": "Recherche de fichiers/dossiers",
     "get_time": "Obtenir l'heure",
     "get_date": "Obtenir la date",
     "show_help": "Aide",
@@ -196,7 +206,10 @@ INTENTS = {
         "ouvre", "ouvrir", "lance", "lancer", "démarre", "démarrer", "start", "open",
         "ouvre la calculatrice", "ouvre le bloc-notes", "ouvre notepad", "ouvre paint", "ouvre navigateur",
         "ouvre chrome", "ouvre edge", "ouvre internet", "lance le navigateur", "lance chrome", "lance edge",
-        "lance internet", "ouvre excel", "ouvre word", "ouvre powerpoint", "ouvre vscode", "ouvre spotify"
+        "lance internet", "ouvre excel", "ouvre word", "ouvre powerpoint", "ouvre vscode", "ouvre spotify",
+        "ouvre git", "lance git", "ouvre excel", "lance excel", "ouvre word", "lance word", "ouvre powerpoint", 
+        "lance powerpoint", "ouvre vscode", "lance vscode", "ouvre spotify", "lance spotify", "ouvre le terminal",
+        "lance le terminal"
     ],
     "shutdown": [
         "éteins l'ordinateur", "arrête l'ordinateur", "ferme la session", "éteindre", "arrêter", "shutdown",
@@ -216,7 +229,7 @@ INTENTS = {
     ],
     "send_email": [
         "envoie un mail", "envoie un email", "envoie mail", "envoie un courriel", "envoie un message", "envoie un e-mail",
-        "envoie un courrier", "envoie une lettre", "envoie un sms", "envoie un texto"
+        "envoie un courrier", "envoie une lettre", "envoie un sms", "envoie un texto", "envoie courriel"
     ],
     "weather": [
         "météo", "quel temps", "fait-il beau", "quel temps fait-il", "donne la météo", "prévisions météo",
@@ -231,6 +244,10 @@ INTENTS = {
     "system_info": [
         "informations système", "statut du système", "état du pc", "configuration système", "spécifications techniques",
         "quelle est ma configuration", "info système", "système info", "caractéristiques pc", "config pc"
+    ],
+    "search_files": [
+        "recherche fichier", "recherche de fichier", "trouve fichier", "cherche fichier", "recherche dossier", "trouve dossier", "cherche dossier",
+        "trouve document", "cherche document", "recherche dans mes fichiers", "recherche dans mes dossiers", "recherche des dossiers"
     ],
     "open_explorer": [
         "ouvrir explorateur", "explorateur fichiers", "navigateur fichiers",
@@ -580,24 +597,13 @@ def modify_event(event_id, new_event):
     ask_feedback()
 
 def open_file_explorer(mode="open", initial_path=None):
-    """Ouvre l'explorateur de fichiers (fonction helper)"""
-    try:
-        from PyQt5.QtWidgets import QApplication
-        app = QApplication.instance() or QApplication([])
-        selected_path = file_explorer_open(mode=mode, initial_path=initial_path)
-        return selected_path
-    except Exception as e:
-        print(f"Erreur ouvrir explorateur: {e}")
+    from PyQt5.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication([])
+    selected_path = file_explorer_open(mode=mode, initial_path=initial_path)
+    if not selected_path:
+        speak("Aucune sélection effectuée.")
         return None
-    
-    # try:
-    #     if not os.path.exists(foldername):
-    #         os.makedirs(foldername)
-    #         speak("Dossier créé avec succès")
-    #     else:
-    #         speak("Le dossier existe déjà")
-    except Exception as e:
-        speak(f"Erreur création dossier: {e}")
+    return selected_path
 
 def read_file(filename=None):
     """Lit un fichier avec sélection vocale"""
@@ -671,19 +677,22 @@ def create_folder(foldername=None):
         speak(error_msg)
         logging.error(error_msg)
 
-def list_files(path="."):
+def list_files(path=None):
+    global LAST_SEARCH_PATH
+    if not path:
+        path = LAST_SEARCH_PATH
+    if not path or not os.path.isdir(path):
+        speak("Aucun dossier sélectionné pour lister les fichiers.")
+        return []
     try:
         files = os.listdir(path)
-        print("Fichiers et dossiers :", files)
-        speak("Voici les fichiers et dossiers.")
-        logging.info(f"Liste des fichiers dans {path}")
-        result = files
+        display_on_front(f"Fichiers et dossiers dans {path} : {files}")
+        feedback(True, "listage des fichiers")
+        return files
     except Exception as e:
+        feedback(False, "listage des fichiers")
         logging.error(f"Erreur listage fichiers dans {path} : {e}")
-        speak("Erreur lors du listage des fichiers.")
-        result = []
-    ask_feedback()
-    return result
+        return []
 
 def rename_file(old_name, new_name):
     try:
@@ -1144,12 +1153,12 @@ def create_folder(foldername=None):
         logging.error(f"Erreur création dossier {folder_path} : {e}")
 
 def list_files(path=None):
+    global LAST_SEARCH_PATH
     if not path:
-        speak("Quel dossier voulez-vous lister ?")
-        path = select_path("select_folder")
-        if not path:
-            feedback(False, "listage des fichiers")
-            return []
+        path = LAST_SEARCH_PATH
+    if not path or not os.path.isdir(path):
+        speak("Aucun dossier sélectionné pour lister les fichiers.")
+        return []
     try:
         files = os.listdir(path)
         display_on_front(f"Fichiers et dossiers dans {path} : {files}")
@@ -1207,6 +1216,8 @@ def process_voice_command(command, forced_intent=None):
                 modify_event(int(event_id), new_event)
             else:
                 speak("Veuillez préciser l'identifiant et le nouveau texte.")
+        elif intent == "search_files":
+            search_files_vocal()
         elif intent == "read_file":
             read_file()
         elif intent == "write_file":
@@ -1498,3 +1509,52 @@ def list_drives():
 
 def get_history():
     return COMMAND_HISTORY
+
+LAST_SEARCH_PATH = None
+
+def search_files_vocal():
+    global LAST_SEARCH_PATH
+    speak("Quel nom de fichier ou dossier voulez-vous rechercher ?")
+    query = listen()
+    if not query:
+        speak("Recherche annulée.")
+        return None
+
+    speak("Dans quel dossier voulez-vous effectuer la recherche ? Dites le chemin ou laissez vide pour tout le disque.")
+    folder = listen()
+    if not folder or not os.path.exists(folder):
+        folder = "C:\\"
+
+    # Vérifie si le dossier est autorisé
+    for forbidden in FORBIDDEN_FOLDERS:
+        if os.path.abspath(folder).startswith(forbidden):
+            speak("Recherche dans ce dossier interdite pour des raisons de sécurité.")
+            return None
+
+    speak(f"Recherche de '{query}' en cours dans {folder}...")
+    results = []
+    for root, dirs, files in os.walk(folder):
+        if any(os.path.abspath(root).startswith(f) for f in FORBIDDEN_FOLDERS):
+            continue
+        for name in files + dirs:
+            if query.lower() in name.lower():
+                results.append(os.path.join(root, name))
+        if len(results) > 50:
+            break
+
+    if results:
+        path = results[0]
+        speak(f"Premier résultat trouvé : {path}")
+        display_on_front(path)
+        # Ouvre l'explorateur à l'endroit du résultat
+        if os.path.isdir(path):
+            os.system(f'explorer "{path}"')
+            LAST_SEARCH_PATH = path
+        else:
+            os.system(f'explorer /select,"{path}"')
+            LAST_SEARCH_PATH = os.path.dirname(path)
+        return path
+    else:
+        speak("Aucun résultat trouvé.")
+        return None
+
