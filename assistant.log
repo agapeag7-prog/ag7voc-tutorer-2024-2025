@@ -337,3 +337,21 @@ TypeError: create() missing 1 required positional argument: 'access_key'
 2025-09-20 18:52:33,032 [INFO] Feedback utilisateur : Incompréhensible
 2025-09-21 10:56:05,169 [INFO] Événement ajouté : 2025-09-21 - créer dossier bonjour
 2025-09-21 10:56:33,701 [INFO] Feedback utilisateur : Non
+2025-09-22 15:56:13,696 [ERROR] Erreur exécution commande: local variable 'CURRENT_SEARCH_INDEX' referenced before assignment
+2025-09-22 18:41:09,869 [ERROR] Erreur exécution commande: type object 'FileExplorerManager' has no attribute 'try_interpret_path'
+2025-09-22 19:21:25,103 [INFO] Événement ajouté : 2025-09-22 - déplacer un fichier
+2025-09-22 19:21:50,533 [INFO] Feedback utilisateur : Non
+2025-09-22 19:37:51,892 [INFO] Événement ajouté : 2025-09-22 - ajoute un événement sortir à 18h30
+2025-09-22 19:38:12,924 [INFO] Feedback utilisateur : Oui
+2025-09-22 21:15:17,185 [INFO] Affichage des événements réussi.
+2025-09-22 21:15:30,030 [INFO] Feedback utilisateur : Non
+2025-09-22 21:16:28,167 [INFO] Événement ajouté : 2025-09-22 - modifier un événement
+2025-09-22 21:28:08,076 [INFO] Application lancée: Git - C:\Program Files\Git\git-bash.exe
+2025-09-22 21:28:37,807 [ERROR] Erreur exécution commande: type object 'FileExplorerManager' has no attribute 'try_interpret_path'
+2025-09-22 21:31:16,930 [ERROR] Erreur exécution commande: type object 'FileExplorerManager' has no attribute 'try_interpret_path'
+2025-09-22 22:22:27,510 [ERROR] Erreur exécution commande: type object 'FileExplorerManager' has no attribute 'try_interpret_path'
+2025-09-23 00:24:34,833 [ERROR] Erreur exécution commande: local variable 'vocal_file_handler' referenced before assignment
+2025-09-23 00:24:56,069 [ERROR] Erreur exécution commande: local variable 'vocal_file_handler' referenced before assignment
+2025-09-23 01:13:01,741 [ERROR] Erreur exécution commande: local variable 'vocal_file_handler' referenced before assignment
+2025-09-23 01:13:23,503 [ERROR] Erreur exécution commande: local variable 'vocal_file_handler' referenced before assignment
+2025-09-23 01:13:46,121 [ERROR] Erreur exécution commande: local variable 'vocal_file_handler' referenced before assignment

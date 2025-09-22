@@ -21,15 +21,23 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PyQt5.QtCore import Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve, pyqtSignal, QObject, QPoint
 from PyQt5.QtGui import QFont, QColor, QPalette, QIcon, QLinearGradient, QPainter, QPainterPath, QPixmap, QBrush, QTextCursor, QPen
 
-from ai_engine import dqn_agent
-
-from voice_manager import voice_manager
-from voice_preferences import voice_prefs
-
 import matplotlib
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+
+
+try:
+    from ai_engine import dqn_agent
+except ImportError:
+    class DQNAgent:
+        def __init__(self):
+            self.memory = []
+            self.epsilon = 1.0
+    dqn_agent = DQNAgent()
+
+from voice_manager import voice_manager
+from voice_preferences import voice_prefs
 
 class AssistantSignals(QObject):
     show_suggestions = pyqtSignal(list, str)
@@ -39,20 +47,6 @@ class AssistantSignals(QObject):
     update_metrics = pyqtSignal(dict)
 
 assistant_signals = AssistantSignals()
-
-class VoicePreferences:
-    def __init__(self):
-        self.preferences = {
-            "wake_words": ["assistant", "réveille", "reveille", "hey assistant"],
-            "sleep_words": ["dors", "veille", "arrête", "stop", "silence"],
-            "voice_speed": 180,
-            "voice_volume": 1.0
-        }
-    
-    def get_preference(self, key):
-        return self.preferences.get(key, [])
-
-voice_prefs = VoicePreferences()
 
 def process_voice_command(command, forced_intent=None):
     print(f"Traitement de la commande: {command}")
@@ -251,8 +245,18 @@ class VirtualAssistant(QMainWindow):
     def __init__(self):
         super().__init__()
         
+        global DQN_AVAILABLE
+        if 'DQN_AVAILABLE' not in globals():
+            DQN_AVAILABLE = False
+        
+        try:
+            self.agent = dqn_agent
+            print(f"Agent DQN initialisé: {len(self.agent.memory)} expériences")
+        except:
+            self.agent = None
+            DQN_AVAILABLE = False
+            print("Agent DQN non disponible")
         self.agent = dqn_agent
-        print(f"Agent DQN initialisé: {len(self.agent.memory)} expériences")
         
         self.is_awake = False
         self.performance_data = []
@@ -1132,6 +1136,15 @@ class VirtualAssistant(QMainWindow):
         except Exception as e:
             print(f"Erreur analyse automatisation : {e}")
     
+def get_command_suggestions(command, top_n=3):
+    """Simule les suggestions de commandes"""
+    suggestions = [
+        ("time_query", "Demander l'heure", 0.8),
+        ("system_info", "Informations système", 0.7),
+        ("file_operation", "Opération fichiers", 0.6)
+    ]
+    return suggestions[:top_n]
+
 def compute_reward(command, success_rate):
     """Calcule la récompense pour l'apprentissage par renforcement"""
     base_reward = 1.0 if success_rate > 0.7 else -1.0

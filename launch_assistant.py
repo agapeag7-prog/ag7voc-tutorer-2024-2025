@@ -2,14 +2,16 @@ import sys
 import os
 import ctypes
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
 def check_dependencies():
     """Vérifie les dépendances essentielles"""
     try:
-        from PyQt5.QtWidgets import QApplication
-        from tensorflow import keras
-        import speech_recognition as sr
+        import PyQt5
+        import speech_recognition
+        import pyttsx3
+        import numpy
         return True
     except ImportError as e:
         print(f"Dépendance manquante: {e}")
@@ -20,45 +22,35 @@ def main():
     print("=" * 40)
     
     if not check_dependencies():
-        print("Veuillez installer les dépendances: pip install -r requirements.txt")
+        print("Veuillez installer les dépendances manquantes")
         input("Appuyez sur Entrée pour quitter...")
         return
     
     try:
         from test_gui import VirtualAssistant
         from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtGui import QFont
         
         app = QApplication(sys.argv)
         
-        font = QFont("Segoe UI", 10)
-        app.setFont(font)
-        
         try:
-            with open("styles.qss", "r", encoding="utf-8") as f:
-                app.setStyleSheet(f.read())
-                print("Styles chargés")
-        except FileNotFoundError:
-            print("Fichier styles.qss non trouvé, utilisation des styles par défaut")
-        except Exception as e:
-            print(f"Erreur chargement styles: {e}")
+            styles_path = os.path.join(current_dir, "styles.qss")
+            if os.path.exists(styles_path):
+                with open(styles_path, "r", encoding="utf-8") as f:
+                    app.setStyleSheet(f.read())
+        except:
+            pass
         
         assistant = VirtualAssistant()
         assistant.show()
         
         print("Assistant lancé avec succès")
         print("Dites 'assistant' pour commencer")
-        print("L'interface graphique est maintenant ouverte")
         
         if sys.platform == "win32":
             ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
         
         sys.exit(app.exec_())
     
-    except ImportError as e:
-        print(f"Erreur d'importation: {e}")
-        print("Lancez: pip install -r requirements.txt")
-        input("Appuyez sur Entrée pour quitter...")
     except Exception as e:
         print(f"Erreur: {e}")
         import traceback

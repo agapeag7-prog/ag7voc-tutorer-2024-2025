@@ -554,5 +554,185 @@
   [
     "ouvre le web",
     "search_web"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "cherche les fichiers connaissance",
+    "list_files"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "chercher documents",
+    "open_explorer"
+  ],
+  [
+    "trouve fichier",
+    "search_files"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "recherche",
+    "search_web"
+  ],
+  [
+    "envoie mail",
+    "send_email"
+  ],
+  [
+    "nouveau dossier",
+    "create_folder"
+  ],
+  [
+    "ouvre bloc-notes",
+    "launch_app"
+  ],
+  [
+    "déplacer un fichier",
+    "add_event"
+  ],
+  [
+    "mets la machine en veille",
+    "restart"
+  ],
+  [
+    "ajoute un événement sortir à 18h30",
+    "add_event"
+  ],
+  [
+    "renommer un fichiers",
+    "create_folder"
+  ],
+  [
+    "ouvre calculatrice",
+    "launch_app"
+  ],
+  [
+    "ouvre le bloc-notes",
+    "launch_app"
+  ],
+  [
+    "cherche les fichiers",
+    "list_files"
+  ],
+  [
+    "lister les fichiers",
+    "list_drives"
+  ],
+  [
+    "liste fichier",
+    "show_events"
+  ],
+  [
+    "lister les fichiers",
+    "list_drives"
+  ],
+  [
+    "liste les fichiers",
+    "list_files"
+  ],
+  [
+    "liste les fichiers dossier bureau",
+    "list_files"
+  ],
+  [
+    "ouvre",
+    "launch_app"
+  ],
+  [
+    "il est quelle heure",
+    "get_time"
+  ],
+  [
+    "on est quel jour",
+    "get_date"
+  ],
+  [
+    "la date",
+    "get_date"
+  ],
+  [
+    "cherche sur internet Céline Dion sur YouTube",
+    "search_web"
+  ],
+  [
+    "qu'est-ce que tu peux faire",
+    "show_help"
+  ],
+  [
+    "ouvre paint",
+    "launch_app"
+  ],
+  [
+    "cherche sur internet Facebook",
+    "search_web"
+  ],
+  [
+    "modifier l'événement",
+    "modify_event"
+  ],
+  [
+    "informations système",
+    "system_info"
+  ],
+  [
+    "analyse à combativité",
+    "modify_event"
+  ],
+  [
+    "ouvre le dossier bureau",
+    "file_operation"
+  ],
+  [
+    "ouvre le dossier bureau",
+    "file_operation"
+  ],
+  [
+    "ouvre le dossier vidéo",
+    "file_navigation"
+  ],
+  [
+    "ouvre le dossier",
+    "file_operation"
+  ],
+  [
+    "lance les fichiers",
+    "list_files"
+  ],
+  [
+    "lister les fichiers",
+    "list_files"
+  ],
+  [
+    "liste les fichiers du dossier bureau",
+    "file_operation"
+  ],
+  [
+    "ouvre Excel",
+    "launch_app"
+  ],
+  [
+    "cherche un fichier",
+    "create_folder"
+  ],
+  [
+    "explorateur fichier vocal",
+    "open_explorer"
   ]
 ]

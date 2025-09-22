@@ -35,6 +35,65 @@ from voice_manager import voice_manager
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
+import threading
+from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgressBar, QTextEdit
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QObject
+
+# from vocal_file_explorer import VocalFileExplorer
+
+from vocal_file_system import vocal_file_handler
+
+try:
+    from ai_engine import DQNAgent, ACTIONS, compute_reward, get_current_state, analyze_user_sentiment
+    DQN_AVAILABLE = True
+    print("Module DQN chargé avec succès")
+except ImportError as e:
+    print(f"Module DQN non disponible: {e}")
+    DQN_AVAILABLE = False
+    
+    class DQNAgent:
+        def __init__(self, *args, **kwargs):
+            self.memory = []
+            self.state = None
+            self.epsilon = 1.0
+        def remember(self, *args, **kwargs):
+            pass
+        def replay(self, *args, **kwargs):
+            return None
+    
+    ACTIONS = ["executer_commande", "demander_precisions", "aucune_action"]
+    
+    def compute_reward(*args, **kwargs): 
+        return 0
+    def get_current_state(*args, **kwargs): 
+        return [0, 0, 0, 0, 0]
+    def analyze_user_sentiment(text): 
+        return 0.5
+
+try:
+    dqn_agent = DQNAgent(5, len(ACTIONS)) if DQN_AVAILABLE else DQNAgent()
+except Exception as e:
+    print(f"Erreur initialisation agent DQN: {e}")
+    dqn_agent = DQNAgent() 
+    DQN_AVAILABLE = False
+
+def check_ai_functions():
+    """Vérifie que toutes les fonctions IA sont disponibles"""
+    try:
+        from ai_engine import DQNAgent, ACTIONS, compute_reward, get_current_state, analyze_user_sentiment
+        print("Module AI engine chargé avec succès")
+        return True
+    except ImportError as e:
+        print(f"Erreur chargement AI engine: {e}")
+        return False
+    except Exception as e:
+        print(f"Erreur inattendue AI engine: {e}")
+        return False
+
+AI_AVAILABLE = check_ai_functions()
+print(f"Statut IA: {'DISPONIBLE' if AI_AVAILABLE else 'INDISPONIBLE'}")
+
+
 FORBIDDEN_FOLDERS = [
     "C:\\Windows",
     "C:\\Program Files",
@@ -79,6 +138,75 @@ except ImportError as e:
     select_drive = None
 
 FRONT_DISPLAY_CALLBACK = None
+
+_SEARCH_VARS = {
+    'LAST_SEARCH_RESULTS': [],
+    'LAST_SEARCH_QUERY': "",
+    'CURRENT_SEARCH_INDEX': 0,
+    'LAST_SEARCH_PATH': None
+}
+
+def init_search_variables():
+    """Initialise toutes les variables de recherche"""
+    global _SEARCH_VARS
+    # S'assurer que toutes les variables existent
+    default_vars = {
+        'LAST_SEARCH_RESULTS': [],
+        'LAST_SEARCH_QUERY': "",
+        'CURRENT_SEARCH_INDEX': 0,
+        'LAST_SEARCH_PATH': None
+    }
+    for key, value in default_vars.items():
+        if key not in _SEARCH_VARS:
+            _SEARCH_VARS[key] = value
+
+def get_search_var(var_name):
+    """Récupère une variable de recherche de manière sécurisée"""
+    init_search_variables()
+    return _SEARCH_VARS.get(var_name)
+
+def set_search_var(var_name, value):
+    """Définit une variable de recherche de manière sécurisée"""
+    global _SEARCH_VARS
+    _SEARCH_VARS[var_name] = value
+
+# Fonctions spécifiques pour un accès facile
+def get_last_search_results():
+    return get_search_var('LAST_SEARCH_RESULTS')
+
+def set_last_search_results(results):
+    set_search_var('LAST_SEARCH_RESULTS', results)
+
+def get_current_search_index():
+    return get_search_var('CURRENT_SEARCH_INDEX')
+
+def set_current_search_index(index):
+    set_search_var('CURRENT_SEARCH_INDEX', index)
+
+def get_last_search_query():
+    return get_search_var('LAST_SEARCH_QUERY')
+
+def set_last_search_query(query):
+    set_search_var('LAST_SEARCH_QUERY', query)
+
+def get_last_search_path():
+    return get_search_var('LAST_SEARCH_PATH')
+
+def set_last_search_path(path):
+    set_search_var('LAST_SEARCH_PATH', path)
+
+# Initialiser au chargement du module
+init_search_variables()
+
+class VocalAssistant:
+    def __init__(self):
+        self.vocal_explorer = vocal_file_handler()
+    
+    def process_voice_command(self, command):
+        if any(word in command.lower() for word in ["explorateur vocal", "navigation vocale"]):
+            speak("Lancement de l'explorateur vocal...")
+            self.vocal_explorer.start_vocal_exploration()
+            return "Explorateur vocal activé"
 
 def set_front_display_callback(callback):
     global FRONT_DISPLAY_CALLBACK
@@ -178,7 +306,7 @@ INTENTS = {
         "crée un répertoire", "crée un dossier de travail", "crée un dossier personnel", "crée un dossier projet"
     ],
     "list_files": [
-        "lister", "afficher", "voir", "liste des fichiers", "montre les fichiers", "quels fichiers", "quels dossiers",
+        "lister", "afficher", "voir", "liste des fichiers", "lister les fichiers", "montre les fichiers", "quels fichiers", "quels dossiers",
         "affiche les documents", "affiche les notes", "affiche les rapports", "affiche les factures"
     ],
     "rename_file": [
@@ -295,6 +423,27 @@ INTENTS = {
     "confirm_selection": [
         "valider sélection", "confirmer choix", "accepter sélection",
         "choisir ceci", "sélectionner ça", "confirmer"
+    ],
+    "auto_search": [
+        "cherche automatiquement", "recherche visuelle", "recherche avec affichage",
+        "montre moi la recherche", "recherche en direct", "recherche graphique"
+    ],
+    "open_and_show": [
+        "ouvre et montre", "ouvre avec explorateur", "affiche les résultats",
+        "montre les fichiers", "ouvre l'explorateur", "visualise la recherche"
+    ],
+    "quick_search": [
+        "recherche rapide", "cherche vite", "recherche instantanée",
+        "trouve rapidement", "scan disque"
+    ],
+    "file_navigation": [
+        "va dans le dossier", "ouvre le dossier", "navigue vers",
+        "va sur le bureau", "va dans documents", "affiche le dossier"
+    ],
+    "file_operations": [
+        "crée un dossier", "nouveau dossier", "supprime le fichier",
+        "renomme le dossier", "copie le fichier", "déplace le dossier",
+        "lis le fichier", "info sur le dossier", "taille du dossier"
     ]
 }
 
@@ -307,9 +456,165 @@ IS_AWAKE = True
 WAKE_WORDS = ["assistant", "réveille-toi", "hey assistant"]
 SLEEP_WORDS = ["dors", "va en veille", "arrête d'écouter"]
 
-LAST_SEARCH_RESULTS = []
-LAST_SEARCH_QUERY = ""
-CURRENT_SEARCH_INDEX = 0
+class SearchProgressDialog(QDialog):
+    """Fenêtre de progression pour la recherche"""
+    
+    update_signal = pyqtSignal(str, int)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Recherche en cours...")
+        self.setFixedSize(400, 200)
+        self.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint)
+        
+        layout = QVBoxLayout()
+        
+        self.status_label = QLabel("Initialisation de la recherche...")
+        layout.addWidget(self.status_label)
+        
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        layout.addWidget(self.progress_bar)
+        
+        self.details_text = QTextEdit()
+        self.details_text.setMaximumHeight(80)
+        self.details_text.setReadOnly(True)
+        layout.addWidget(self.details_text)
+        
+        self.setLayout(layout)
+        
+        # Connecter le signal
+        self.update_signal.connect(self.update_display)
+    
+    def update_display(self, message, progress):
+        """Met à jour l'affichage de manière thread-safe"""
+        self.status_label.setText(message)
+        self.progress_bar.setValue(progress)
+        self.details_text.append(message)
+        
+        # Auto-scroll
+        cursor = self.details_text.textCursor()
+        cursor.movePosition(cursor.End)
+        self.details_text.setTextCursor(cursor)
+
+class FileExplorerManager:
+    """Gère l'ouverture automatique de l'explorateur de fichiers"""
+    
+    @staticmethod
+    def try_interpret_path(spoken_path):
+        """Essaye d'interpréter un chemin parlé en chemin réel"""
+        if not spoken_path:
+            return None
+            
+        spoken_lower = spoken_path.lower()
+        
+        path_mapping = {
+            "bureau": os.path.join(os.path.expanduser("~"), "Desktop"),
+            "documents": os.path.join(os.path.expanduser("~"), "Documents"),
+            "téléchargements": os.path.join(os.path.expanduser("~"), "Downloads"),
+            "images": os.path.join(os.path.expanduser("~"), "Pictures"),
+            "musique": os.path.join(os.path.expanduser("~"), "Music"),
+            "vidéos": os.path.join(os.path.expanduser("~"), "Videos"),
+            "disque c": "C:\\",
+            "disque d": "D:\\", 
+            "disque e": "E:\\",
+            "racine": "C:\\",
+            "disque dur": "C:\\",
+            "clé usb": "D:\\",
+        }
+        
+        for spoken, actual in path_mapping.items():
+            if spoken in spoken_lower:
+                if os.path.exists(actual):
+                    return actual
+                else:
+                    parent_dir = os.path.dirname(actual)
+                    if os.path.exists(parent_dir):
+                        return parent_dir
+        
+        words = spoken_lower.split()
+        folder_keywords = ["dossier", "dossiers", "dans", "le", "la", "du", "des", "sur"]
+        
+        meaningful_words = [word for word in words if word not in folder_keywords]
+        
+        if meaningful_words:
+            search_terms = " ".join(meaningful_words)
+            return FileExplorerManager._find_folder_by_name(search_terms)
+        
+        return None
+    
+    @staticmethod
+    def _find_folder_by_name(folder_name, search_paths=None):
+        """Trouve un dossier par son nom dans les emplacements courants"""
+        if search_paths is None:
+            search_paths = [
+                os.path.expanduser("~"),
+                "C:\\",
+                os.path.join(os.path.expanduser("~"), "Desktop"),
+            ]
+        
+        folder_name_lower = folder_name.lower()
+        
+        for search_path in search_paths:
+            if not os.path.exists(search_path):
+                continue
+                
+            try:
+                for root, dirs, _ in os.walk(search_path):
+                    for dir_name in dirs:
+                        if folder_name_lower in dir_name.lower():
+                            full_path = os.path.join(root, dir_name)
+                            if os.path.isdir(full_path):
+                                return full_path
+                    
+                    if root.count(os.sep) > 3:
+                        break
+                        
+            except (PermissionError, OSError):
+                continue
+        
+        return None
+    
+    @staticmethod
+    def open_explorer_and_select(path):
+        """Ouvre l'explorateur et sélectionne le fichier/dossier"""
+        try:
+            if os.path.isfile(path):
+                os.system(f'explorer /select,"{os.path.abspath(path)}"')
+            elif os.path.isdir(path):
+                os.startfile(os.path.abspath(path))
+            return True
+        except Exception as e:
+            print(f"Erreur ouverture explorateur: {e}")
+            return False
+    
+    @staticmethod
+    def open_search_results_in_explorer(results, search_query):
+        """Ouvre les résultats de recherche dans l'explorateur"""
+        if not results:
+            return False
+        
+        # Créer un dossier temporaire avec des liens symboliques vers les résultats
+        temp_dir = os.path.join(os.getenv('TEMP'), f"AG7VOC_Search_{int(time.time())}")
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        try:
+            # Créer des liens vers les résultats
+            for i, result in enumerate(results[:20]):  # Limiter à 20 résultats
+                link_name = f"{i+1:02d}_{os.path.basename(result)}.lnk"
+                link_path = os.path.join(temp_dir, link_name)
+                
+                # Créer un fichier de raccourci
+                with open(link_path, 'w', encoding='utf-8') as f:
+                    f.write(f"[InternetShortcut]\nURL=file:///{result}\n")
+            
+            # Ouvrir le dossier des résultats
+            os.startfile(temp_dir)
+            return True
+            
+        except Exception as e:
+            print(f"Erreur création liens résultats: {e}")
+            return False
 
 class WindowsProgramDetector:
     def __init__(self):
@@ -624,49 +929,64 @@ def modify_event(event_id, new_event):
     ask_feedback()
 
 def offer_search_actions(results):
-    """Propose des actions après une recherche"""
-    global CURRENT_SEARCH_INDEX
+    """Propose des actions après une recherche avec gestion sécurisée"""
+    # Utiliser les variables sécurisées
+    set_last_search_results(results)
+    current_index = get_current_search_index()
+    results = get_last_search_results()
     
-    if not results:
+    if not results or len(results) == 0:
         speak("Aucun résultat à afficher.")
         return None
     
-    # Afficher le premier résultat
-    CURRENT_SEARCH_INDEX = 0
-    current_result = results[CURRENT_SEARCH_INDEX]
+    # S'assurer que l'index est dans les limites
+    if current_index >= len(results):
+        current_index = 0
+        set_current_search_index(0)
+    
+    current_result = results[current_index]
     is_dir = os.path.isdir(current_result)
     
     result_type = "dossier" if is_dir else "fichier"
-    speak(f"Premier {result_type} trouvé: {os.path.basename(current_result)}")
-    display_on_front(f"1/{len(results)}: {os.path.basename(current_result)}")
+    speak(f"Résultat {current_index + 1} sur {len(results)}: {os.path.basename(current_result)}")
+    display_on_front(f"{current_index + 1}/{len(results)}: {os.path.basename(current_result)} - {result_type}")
     
     # Proposer des actions
     speak("Que voulez-vous faire? Vous pouvez dire: lire, ouvrir, suivant, précédent, ou actions pour plus d'options.")
     action = listen()
     
     if action:
-        if "lire" in action.lower() and not is_dir:
+        action_lower = action.lower()
+        if "lire" in action_lower and not is_dir:
             return read_file_after_search(current_result)
-        elif "ouvrir" in action.lower():
+        elif "ouvrir" in action_lower:
             return open_file_default(current_result)
-        elif "suivant" in action.lower() and len(results) > 1:
-            CURRENT_SEARCH_INDEX = (CURRENT_SEARCH_INDEX + 1) % len(results)
+        elif "suivant" in action_lower and len(results) > 1:
+            new_index = (current_index + 1) % len(results)
+            set_current_search_index(new_index)
             return offer_search_actions(results)
-        elif "précédent" in action.lower() and len(results) > 1:
-            CURRENT_SEARCH_INDEX = (CURRENT_SEARCH_INDEX - 1) % len(results)
+        elif "précédent" in action_lower and len(results) > 1:
+            new_index = (current_index - 1) % len(results)
+            set_current_search_index(new_index)
             return offer_search_actions(results)
-        elif "actions" in action.lower() or "option" in action.lower():
+        elif "actions" in action_lower or "option" in action_lower:
             return offer_file_actions(current_result)
-        elif "recherche" in action.lower() or "nouveau" in action.lower():
+        elif "recherche" in action_lower or "nouveau" in action_lower:
             return search_files_vocal()
+        elif "annuler" in action_lower or "retour" in action_lower:
+            speak("Retour au menu principal.")
+            return None
         else:
             speak("Action non reconnue. Veuillez réessayer.")
             return offer_search_actions(results)
     
-    return None
+    return current_result
 
 def offer_file_actions(file_path):
-    """Propose des actions sur un fichier spécifique"""
+    """Propose des actions sur un fichier avec gestion sécurisée"""
+    # Initialiser les variables au début de la fonction
+    init_search_variables()
+    
     is_dir = os.path.isdir(file_path)
     file_name = os.path.basename(file_path)
     
@@ -694,23 +1014,11 @@ def offer_file_actions(file_path):
             ("info", "Informations sur le fichier"),
             ("retour", "Retour aux résultats")
         ]
-        
-        # Actions spécifiques selon le type de fichier
-        if file_ext in ['.txt', '.csv', '.json', '.xml']:
-            actions.insert(2, ("analyser", "Analyser le contenu"))
-        elif file_ext in ['.pdf']:
-            actions.insert(1, ("résumer", "Résumer le document"))
     
     # Énoncer les options disponibles
-    options_text = "Options: "
+    speak("Options disponibles: ")
     for i, (action, description) in enumerate(actions, 1):
-        options_text += f"{i}. {description}. "
-        if i % 3 == 0:  # Limiter la longueur des phrases
-            speak(options_text)
-            options_text = ""
-    
-    if options_text:
-        speak(options_text)
+        speak(f"{i}. {description}")
     
     speak("Dites le numéro de l'action ou son nom.")
     choice = listen()
@@ -736,36 +1044,41 @@ def offer_file_actions(file_path):
                 speak("Action non reconnue.")
                 return offer_file_actions(file_path)
         
-        # Exécuter l'action
-        if action == "lire":
-            return read_file_after_search(file_path)
-        elif action == "ouvrir":
-            return open_file_default(file_path)
-        elif action == "modifier":
-            return edit_file_after_search(file_path)
-        elif action == "renommer":
-            return rename_file_after_search(file_path)
-        elif action == "copier":
-            return copy_file_after_search(file_path)
-        elif action == "déplacer":
-            return move_file_after_search(file_path)
-        elif action == "supprimer":
-            return delete_file_after_search(file_path)
-        elif action == "info":
-            return get_file_info(file_path)
-        elif action == "analyser":
-            return analyze_file_content(file_path)
-        elif action == "résumer":
-            return summarize_document(file_path)
-        elif action == "lister":
-            return list_directory_content(file_path)
-        elif action == "rechercher":
-            speak("Que voulez-vous rechercher dans ce dossier?")
-            new_query = listen()
-            if new_query:
-                return search_files_vocal_in_directory(file_path, new_query)
-        elif action == "retour":
-            return offer_search_actions(LAST_SEARCH_RESULTS)
+        # Exécuter l'action avec gestion d'erreur
+        try:
+            if action == "lire":
+                return read_file_after_search(file_path)
+            elif action == "ouvrir":
+                return open_file_default(file_path)
+            elif action == "modifier":
+                return edit_file_after_search(file_path)
+            elif action == "renommer":
+                return rename_file_after_search(file_path)
+            elif action == "copier":
+                return copy_file_after_search(file_path)
+            elif action == "déplacer":
+                return move_file_after_search(file_path)
+            elif action == "supprimer":
+                return delete_file_after_search(file_path)
+            elif action == "info":
+                return get_file_info(file_path)
+            elif action == "lister":
+                return list_directory_content(file_path)
+            elif action == "rechercher":
+                speak("Que voulez-vous rechercher dans ce dossier?")
+                new_query = listen()
+                if new_query:
+                    return search_files_vocal_in_directory(file_path, new_query)
+            elif action == "retour":
+                results = get_last_search_results()
+                if results:
+                    return offer_search_actions(results)
+                else:
+                    speak("Aucun résultat de recherche précédent.")
+                    return None
+        except Exception as e:
+            speak(f"Erreur lors de l'exécution de l'action: {str(e)}")
+            return file_path
     
     return file_path
 
@@ -985,17 +1298,35 @@ def edit_file_after_search(file_path):
         return file_path
 
 def open_file_default(file_path):
-    """Ouvre un fichier avec l'application par défaut"""
+    """Ouvre un fichier/dossier avec gestion automatique"""
     try:
         if os.path.isdir(file_path):
+            # Pour les dossiers, ouvrir directement
             os.startfile(file_path)
-            speak("Dossier ouvert.")
+            speak(f"Dossier {os.path.basename(file_path)} ouvert.")
+            
+            # Proposer automatiquement de lister le contenu
+            QTimer.singleShot(2000, lambda: speak(
+                "Dites 'lister' pour voir le contenu de ce dossier."))
+                
         else:
+            # Pour les fichiers, ouvrir avec l'application par défaut
             os.startfile(file_path)
-            speak("Fichier ouvert avec l'application par défaut.")
+            speak(f"Fichier {os.path.basename(file_path)} ouvert.")
+            
+            # Selon le type de fichier, proposer des actions spécifiques
+            file_ext = os.path.splitext(file_path)[1].lower()
+            if file_ext in ['.txt', '.pdf', '.doc', '.docx']:
+                QTimer.singleShot(3000, lambda: speak(
+                    "Dites 'lire' si vous voulez que je vous lise le contenu."))
+            elif file_ext in ['.xls', '.xlsx', '.csv']:
+                QTimer.singleShot(3000, lambda: speak(
+                    "Dites 'analyser' pour obtenir un résumé des données."))
+                    
         return file_path
+        
     except Exception as e:
-        speak(f"Impossible d'ouvrir le fichier: {str(e)}")
+        speak(f"Impossible d'ouvrir automatiquement. Erreur: {str(e)}")
         return file_path
 
 def get_file_info(file_path):
@@ -1445,6 +1776,19 @@ def move_file_with_gui(src=None, dst=None):
             
     except Exception as e:
         speak(f"Erreur déplacement fichier: {e}")
+
+def init_search_variables():
+    """Initialise les variables de recherche si elles n'existent pas"""
+    global LAST_SEARCH_RESULTS, LAST_SEARCH_QUERY, CURRENT_SEARCH_INDEX, LAST_SEARCH_PATH
+    
+    if 'LAST_SEARCH_RESULTS' not in globals():
+        LAST_SEARCH_RESULTS = []
+    if 'LAST_SEARCH_QUERY' not in globals():
+        LAST_SEARCH_QUERY = ""
+    if 'CURRENT_SEARCH_INDEX' not in globals():
+        CURRENT_SEARCH_INDEX = 0
+    if 'LAST_SEARCH_PATH' not in globals():
+        LAST_SEARCH_PATH = None
 
 def rename_file_after_search(file_path):
     """Renomme un fichier après une recherche"""
@@ -1980,12 +2324,82 @@ def list_files(path=None):
         logging.error(f"Erreur listage fichiers dans {path} : {e}")
         return []
 
-# Exemple d’intégration des suggestions IA après chaque commande
 def process_voice_command(command, forced_intent=None):
     global dqn_agent
+    global DQN_AVAILABLE
     
     start_time = time.time()
     command_complexity = len(command.split()) / 20.0
+    
+    #CORRECTION: Import sécurisé avec gestion d'erreur
+    try:
+        # Vérifier si c'est une commande fichiers/dossiers
+        file_keywords = [
+            'dossier', 'fichier', 'ouvre', 'ouvrir', 'crée', 'créer', 
+            'supprime', 'supprimer', 'bureau', 'documents', 'va dans', 
+            'navigue', 'affiche', 'montre', 'lis'
+        ]
+        
+        command_lower = command.lower()
+        
+        if any(keyword in command_lower for keyword in file_keywords):
+            print(f"Tentative de traitement comme commande fichier: {command}")
+            
+            # Import dynamique pour éviter les problèmes de circularité
+            try:
+                from vocal_file_system import vocal_file_handler
+                result = vocal_file_handler.handle_command(command)
+                
+                if result is not None and result != False:
+                    print(f"Commande fichiers traitée avec succès: {command}")
+                    
+                    # Enregistrement dans l'historique
+                    COMMAND_HISTORY.append((command, "file_operation"))
+                    save_history()
+                    
+                    speak("Opération sur les fichiers terminée.")
+                    return "Commande fichiers exécutée"
+                else:
+                    print(f"La commande fichiers a retourné: {result}")
+                    # Continuer avec le traitement normal
+                    
+            except ImportError as e:
+                print(f"Import impossible du gestionnaire fichiers: {e}")
+            except Exception as e:
+                print(f"Erreur gestionnaire fichiers: {e}")
+                
+    except Exception as e:
+        print(f"Erreur générale dans la détection fichiers: {e}")
+    
+    navigation_commands = ['suivant', 'précédent', 'avant', 'prochain', 'précédent']
+    
+    if command.lower().strip() in navigation_commands:
+        print(f"Commande de navigation détectée: {command}")
+        
+        if "suivant" in command.lower() or "prochain" in command.lower():
+            # Logique de navigation suivante
+            from ag7voc import get_last_search_results, get_current_search_index, set_current_search_index
+            results = get_last_search_results()
+            if results:
+                current_index = get_current_search_index()
+                new_index = (current_index + 1) % len(results)
+                set_current_search_index(new_index)
+                speak(f"Résultat {new_index + 1} sur {len(results)}")
+                return "Navigation suivante"
+        
+        elif "précédent" in command.lower() or "avant" in command.lower():
+            from ag7voc import get_last_search_results, get_current_search_index, set_current_search_index
+            results = get_last_search_results()
+            if results:
+                current_index = get_current_search_index()
+                new_index = (current_index - 1) % len(results)
+                set_current_search_index(new_index)
+                speak(f"Résultat {new_index + 1} sur {len(results)}")
+                return "Navigation précédente"
+    
+    
+    if 'DQN_AVAILABLE' not in globals():
+        DQN_AVAILABLE = False
     
     if forced_intent:
         intent = forced_intent
@@ -1996,19 +2410,25 @@ def process_voice_command(command, forced_intent=None):
         speak("Désolé, je n'ai pas compris la commande.")
         
         if DQN_AVAILABLE and dqn_agent:
-            next_state = get_current_state(0, time.localtime().tm_hour/24, 
-                                         psutil.cpu_percent()/100, 
-                                         psutil.virtual_memory().percent/100, 
-                                         0.5)
-            reward = compute_reward("negatif", time.time() - start_time, command_complexity)
-            dqn_agent.remember(dqn_agent.state, ACTIONS.index("demander_precisions"), reward, next_state, False)
-            dqn_agent.state = next_state
+            try:
+                next_state = get_current_state(0, time.localtime().tm_hour/24, 
+                                             psutil.cpu_percent()/100, 
+                                             psutil.virtual_memory().percent/100, 
+                                             0.5)
+                reward = compute_reward("negatif", time.time() - start_time, command_complexity)
+                dqn_agent.remember(dqn_agent.state, ACTIONS.index("demander_precisions"), reward, next_state, False)
+                dqn_agent.state = next_state
+            except Exception as e:
+                print(f"Erreur DQN dans traitement d'erreur: {e}")
         
         return
                 
     success = True
+    
     try:
-        if intent == "add_event":
+        if vocal_file_handler.handle_command(command):
+            return
+        elif intent == "add_event":
             date_str = extract_date(command)
             event = command
             add_event(date_str, event)
@@ -2027,40 +2447,101 @@ def process_voice_command(command, forced_intent=None):
                 modify_event(int(event_id), new_event)
             else:
                 speak("Veuillez préciser l'identifiant et le nouveau texte.")
-        elif intent == "read_after_search":
-            if LAST_SEARCH_RESULTS and CURRENT_SEARCH_INDEX < len(LAST_SEARCH_RESULTS):
-                read_file_after_search(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])
+        
+        elif intent == "auto_search" or intent == "quick_search":
+            speak("Lancement de la recherche automatique avec visualisation...")
+            return start_visual_search("*", "C:\\")  # Recherche générale
+        
+        elif intent == "open_and_show":
+            if get_last_search_results():
+                results = get_last_search_results()
+                FileExplorerManager.open_search_results_in_explorer(results, get_last_search_query())
+                speak("Résultats ouverts dans l'explorateur.")
             else:
+                speak("Aucune recherche récente. Je lance une nouvelle recherche.")
+                return search_files_vocal()
+        
+        elif intent == "read_after_search":
+            init_search_variables()
+            results = get_last_search_results()
+            current_index = get_current_search_index()
+            
+            if not results:
                 speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+            elif current_index >= len(results):
+                speak("Index de recherche invalide. Réinitialisation.")
+                set_current_search_index(0)
+                if results:
+                    read_file_after_search(results[0])
+            else:
+                read_file_after_search(results[current_index])
         
         elif intent == "edit_after_search":
-            if LAST_SEARCH_RESULTS and CURRENT_SEARCH_INDEX < len(LAST_SEARCH_RESULTS):
-                edit_file_after_search(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])
-            else:
+            init_search_variables()
+            results = get_last_search_results()
+            current_index = get_current_search_index()
+            
+            if not results:
                 speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+            elif current_index >= len(results):
+                speak("Index de recherche invalide. Réinitialisation.")
+                set_current_search_index(0)
+                if results:
+                    edit_file_after_search(results[0])
+            else:
+                edit_file_after_search(results[current_index])
         
         elif intent == "file_actions":
-            if LAST_SEARCH_RESULTS and CURRENT_SEARCH_INDEX < len(LAST_SEARCH_RESULTS):
-                offer_file_actions(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])
-            else:
+            init_search_variables()
+            results = get_last_search_results()
+            current_index = get_current_search_index()
+            
+            if not results:
                 speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+            elif current_index >= len(results):
+                speak("Index de recherche invalide. Réinitialisation.")
+                set_current_search_index(0)
+                if results:
+                    offer_file_actions(results[0])
+            else:
+                offer_file_actions(results[current_index])
         
         elif intent == "navigate_results":
-            if LAST_SEARCH_RESULTS:
-                if "suivant" in command or "prochain" in command:
-                    CURRENT_SEARCH_INDEX = (CURRENT_SEARCH_INDEX + 1) % len(LAST_SEARCH_RESULTS)
-                    speak(f"Résultat {CURRENT_SEARCH_INDEX + 1} sur {len(LAST_SEARCH_RESULTS)}: {os.path.basename(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])}")
-                elif "précédent" in command or "avant" in command:
-                    CURRENT_SEARCH_INDEX = (CURRENT_SEARCH_INDEX - 1) % len(LAST_SEARCH_RESULTS)
-                    speak(f"Résultat {CURRENT_SEARCH_INDEX + 1} sur {len(LAST_SEARCH_RESULTS)}: {os.path.basename(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])}")
-            else:
+            init_search_variables()
+            results = get_last_search_results()
+            current_index = get_current_search_index()
+            
+            if not results:
                 speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+            else:
+                if current_index >= len(results):
+                    current_index = 0
+                    set_current_search_index(0)
+                    
+                if "suivant" in command or "prochain" in command:
+                    new_index = (current_index + 1) % len(results)
+                    set_current_search_index(new_index)
+                    speak(f"Résultat {new_index + 1} sur {len(results)}: {os.path.basename(results[new_index])}")
+                elif "précédent" in command or "avant" in command:
+                    new_index = (current_index - 1) % len(results)
+                    set_current_search_index(new_index)
+                    speak(f"Résultat {new_index + 1} sur {len(results)}: {os.path.basename(results[new_index])}")
         
         elif intent == "file_info":
-            if LAST_SEARCH_RESULTS and CURRENT_SEARCH_INDEX < len(LAST_SEARCH_RESULTS):
-                get_file_info(LAST_SEARCH_RESULTS[CURRENT_SEARCH_INDEX])
-            else:
+            init_search_variables()
+            results = get_last_search_results()
+            current_index = get_current_search_index()
+            
+            if not results:
                 speak("Aucun résultat de recherche récent. Veuillez d'abord effectuer une recherche.")
+            elif current_index >= len(results):
+                speak("Index de recherche invalide. Réinitialisation.")
+                set_current_search_index(0)
+                if results:
+                    get_file_info(results[0])
+            else:
+                get_file_info(results[current_index])
+        
         elif intent == "search_files":
             search_files_vocal()
         elif intent == "read_file":
@@ -2149,43 +2630,37 @@ def process_voice_command(command, forced_intent=None):
         success = False
         logging.error(f"Erreur exécution commande: {e}")
         speak("Désolé, une erreur s'est produite.")
+        print(f"Erreur détaillée: {e}")
 
     if DQN_AVAILABLE and dqn_agent:
-        execution_time = time.time() - start_time
-        current_hour = time.localtime().tm_hour / 24.0
-        cpu_usage = psutil.cpu_percent() / 100.0
-        memory_usage = psutil.virtual_memory().percent / 100.0
-        
-        next_state = get_current_state(1 if success else 0, current_hour, cpu_usage, memory_usage, 0.5)
-        
-        reward = compute_reward("neutre", execution_time, command_complexity)
-        
-        action_idx = ACTIONS.index("executer_commande")
-        
-        dqn_agent.remember(dqn_agent.state, action_idx, reward, next_state, False)
-        dqn_agent.state = next_state
-        
-        if voice_prefs.get_preference("auto_feedback"):
-            speak("Est-ce que cela vous convient ?")
-            feedback = listen()
-            
-            if feedback and DQN_AVAILABLE:
-                user_mood = analyze_user_sentiment(feedback)
-                feedback_type = "positif" if user_mood > 0.6 else "negatif" if user_mood < 0.4 else "neutre"
-                
-                reward = compute_reward(feedback_type, execution_time, command_complexity)
-                dqn_agent.remember(dqn_agent.state, action_idx, reward, next_state, True)
-
-    if DQN_AVAILABLE:
         try:
-            dqn_agent = DQNAgent(5, len(ACTIONS))
-            print("Agent DQN initialisé")
+            execution_time = time.time() - start_time
+            current_hour = time.localtime().tm_hour / 24.0
+            cpu_usage = psutil.cpu_percent() / 100.0
+            memory_usage = psutil.virtual_memory().percent / 100.0
+            
+            next_state = get_current_state(1 if success else 0, current_hour, cpu_usage, memory_usage, 0.5)
+            
+            reward = compute_reward("neutre", execution_time, command_complexity)
+            
+            action_idx = ACTIONS.index("executer_commande")
+            
+            dqn_agent.remember(dqn_agent.state, action_idx, reward, next_state, False)
+            dqn_agent.state = next_state
+            
+            if voice_prefs.get_preference("auto_feedback"):
+                speak("Est-ce que cela vous convient ?")
+                feedback_text = listen()
+                
+                if feedback_text and DQN_AVAILABLE:
+                    user_mood = analyze_user_sentiment(feedback_text)
+                    feedback_type = "positif" if user_mood > 0.6 else "negatif" if user_mood < 0.4 else "neutre"
+                    
+                    reward = compute_reward(feedback_type, execution_time, command_complexity)
+                    dqn_agent.remember(dqn_agent.state, action_idx, reward, next_state, True)
+                    
         except Exception as e:
-            print(f"Erreur initialisation agent DQN: {e}")
-            dqn_agent = None
-            DQN_AVAILABLE = False
-    else:
-        dqn_agent = None
+            print(f"Erreur dans la section DQN: {e}")
 def check_write_permissions(self):
     try:
         test_file = "test_write.txt"
@@ -2355,48 +2830,197 @@ def list_drives():
 def get_history():
     return COMMAND_HISTORY
 
+def start_visual_search(query, search_folder):
+    """Lance une recherche avec interface visuelle"""
+    
+    def search_thread():
+        """Thread de recherche pour ne pas bloquer l'interface"""
+        try:
+            # Mettre à jour la progression
+            progress_dialog.update_signal.emit(f"Recherche de '{query}' dans {search_folder}", 10)
+            
+            results = []
+            total_scanned = 0
+            found_count = 0
+            
+            # Ouvrir l'explorateur sur le dossier de recherche
+            QTimer.singleShot(500, lambda: FileExplorerManager.open_explorer_and_select(search_folder))
+            
+            # Parcourir les dossiers avec progression
+            for root, dirs, files in os.walk(search_folder):
+                # Ignorer les dossiers système
+                dirs[:] = [d for d in dirs if not any(ignore in os.path.join(root, d).lower() 
+                                                     for ignore in ['windows', 'system32', 'temp', 'cache'])]
+                
+                # Vérifier les dossiers interdits
+                if any(os.path.abspath(root).startswith(f) for f in FORBIDDEN_FOLDERS):
+                    continue
+                
+                # Rechercher dans les dossiers
+                for name in dirs:
+                    total_scanned += 1
+                    if query.lower() in name.lower():
+                        results.append(os.path.join(root, name))
+                        found_count += 1
+                        progress_dialog.update_signal.emit(f"Dossier trouvé: {name}", 
+                                                          min(90, 10 + (total_scanned % 100)))
+                
+                # Rechercher dans les fichiers
+                for name in files:
+                    total_scanned += 1
+                    if query.lower() in name.lower():
+                        results.append(os.path.join(root, name))
+                        found_count += 1
+                        progress_dialog.update_signal.emit(f"Fichier trouvé: {name}", 
+                                                          min(90, 10 + (total_scanned % 100)))
+                
+                # Mettre à jour la progression
+                if total_scanned % 50 == 0:
+                    progress_dialog.update_signal.emit(
+                        f"Scanné: {total_scanned} éléments | Trouvés: {found_count}", 
+                        min(80, 10 + int(total_scanned / 1000))
+                    )
+                
+                # Limiter le nombre de résultats
+                if len(results) >= 100:
+                    progress_dialog.update_signal.emit("Limite de 100 résultats atteinte", 95)
+                    break
+            
+            # Finaliser la recherche
+            set_last_search_results(results)
+            
+            if results:
+                progress_dialog.update_signal.emit(
+                    f"Recherche terminée: {len(results)} résultats trouvés", 100)
+                
+                # Ouvrir automatiquement les résultats dans l'explorateur
+                QTimer.singleShot(1000, lambda: FileExplorerManager.open_search_results_in_explorer(results, query))
+                
+                # Proposer les actions automatiquement
+                QTimer.singleShot(2000, lambda: auto_offer_actions(results))
+                
+            else:
+                progress_dialog.update_signal.emit("Aucun résultat trouvé", 100)
+                
+        except Exception as e:
+            progress_dialog.update_signal.emit(f"Erreur lors de la recherche: {str(e)}", 100)
+    
+    # Créer et afficher la fenêtre de progression
+    app = QApplication.instance() or QApplication([])
+    progress_dialog = SearchProgressDialog()
+    progress_dialog.show()
+    
+    # Lancer la recherche dans un thread séparé
+    search_thread = threading.Thread(target=search_thread)
+    search_thread.daemon = True
+    search_thread.start()
+    
+    # Exécuter la fenêtre modale
+    progress_dialog.exec_()
+    
+    return get_last_search_results()
+
+def auto_offer_actions(results):
+    """Propose automatiquement des actions après la recherche"""
+    if not results:
+        return
+    
+    set_last_search_results(results)
+    set_current_search_index(0)
+    
+    first_result = results[0]
+    is_dir = os.path.isdir(first_result)
+    result_type = "dossier" if is_dir else "fichier"
+    
+    # Message vocal automatique
+    if len(results) == 1:
+        speak(f"J'ai trouvé un {result_type}. Ouverture automatique...")
+        open_file_default(first_result)
+    elif len(results) <= 5:
+        speak(f"J'ai trouvé {len(results)} résultats. Ouverture du premier...")
+        open_file_default(first_result)
+        
+        # Proposer la navigation si peu de résultats
+        QTimer.singleShot(3000, lambda: speak(
+            f"Vous pouvez dire 'suivant' pour voir le résultat suivant sur {len(results)}."))
+    else:
+        speak(f"J'ai trouvé {len(results)} résultats. Les résultats ont été ouverts dans l'explorateur.")
+        
+        # Proposer des actions avancées
+        QTimer.singleShot(3000, lambda: speak(
+            "Dites 'filtrer' pour affiner la recherche, ou 'premier' pour ouvrir le premier résultat."))
+
+
+def try_interpret_path(spoken_path):
+    """Essaye d'interpréter un chemin parlé"""
+    path_mapping = {
+        "bureau": "~/Desktop",
+        "documents": "~/Documents", 
+        "téléchargements": "~/Downloads",
+        "images": "~/Pictures",
+        "musique": "~/Music",
+        "vidéos": "~/Videos",
+        "disque c": "C:\\",
+        "disque d": "D:\\",
+        "racine": "C:\\"
+    }
+    
+    # Chercher dans le mapping
+    spoken_lower = spoken_path.lower()
+    for spoken, actual in path_mapping.items():
+        if spoken in spoken_lower:
+            return os.path.expanduser(actual)
+    
+    # Essayer de comprendre les chemins parlés comme "dossier projet travail"
+    words = spoken_lower.split()
+    if "dossier" in words or "dossiers" in words:
+        # Essayer de trouver le nom du dossier
+        for word in words:
+            if word not in ["dossier", "dossiers", "dans", "le", "la", "du", "des"]:
+                potential_path = f"C:\\{word}"
+                if os.path.exists(potential_path):
+                    return potential_path
+    
+    return None
+
+
 LAST_SEARCH_PATH = None
 
 def search_files_vocal():
-    global LAST_SEARCH_RESULTS, LAST_SEARCH_QUERY, CURRENT_SEARCH_INDEX
+    """Recherche vocale complètement automatique avec visualisation"""
+    init_search_variables()
     
-    speak("Quel nom de fichier ou dossier voulez-vous rechercher ?")
+    speak("Quel nom de fichier ou dossier recherchez-vous ?")
     query = listen()
     if not query:
         speak("Recherche annulée.")
         return None
 
-    LAST_SEARCH_QUERY = query
-    CURRENT_SEARCH_INDEX = 0
+    set_last_search_query(query)
+    set_current_search_index(0)
 
-    speak("Dans quel dossier voulez-vous effectuer la recherche ? Dites le chemin ou laissez vide pour tout le disque.")
-    folder = listen()
-    if not folder or not os.path.exists(folder):
+    speak("Dans quel dossier voulez-vous rechercher ? Dites 'disque' pour tout chercher, ou le chemin spécifique.")
+    folder_input = listen()
+    
+    if not folder_input or "disque" in folder_input.lower():
         folder = "C:\\"
+        speak("Recherche sur l'ensemble du disque C.")
+    else:
+        folder = FileExplorerManager.try_interpret_path(folder_input)  # ← CORRIGÉ
+        if not folder or not os.path.exists(folder):
+            if any(word in folder_input.lower() for word in ["bureau", "desktop"]):
+                folder = os.path.join(os.path.expanduser("~"), "Desktop")
+            elif "documents" in folder_input.lower():
+                folder = os.path.join(os.path.expanduser("~"), "Documents")
+            else:
+                speak("Dossier non trouvé. Recherche sur l'ensemble du disque C.")
+                folder = "C:\\"
 
-    # Vérifie si le dossier est autorisé
     for forbidden in FORBIDDEN_FOLDERS:
         if os.path.abspath(folder).startswith(forbidden):
-            speak("Recherche dans ce dossier interdite pour des raisons de sécurité.")
-            return None
-
-    speak(f"Recherche de '{query}' en cours dans {folder}...")
-    results = []
-    for root, dirs, files in os.walk(folder):
-        if any(os.path.abspath(root).startswith(f) for f in FORBIDDEN_FOLDERS):
-            continue
-        for name in files + dirs:
-            if query.lower() in name.lower():
-                results.append(os.path.join(root, name))
-        if len(results) > 50:
+            speak("Recherche interdite dans ce dossier pour des raisons de sécurité. Utilisation du dossier Documents.")
+            folder = os.path.expanduser("~/Documents")
             break
 
-    LAST_SEARCH_RESULTS = results
-
-    if results:
-        speak(f"J'ai trouvé {len(results)} résultats.")
-        return offer_search_actions(results)
-    else:
-        speak("Aucun résultat trouvé.")
-        return None
+    return start_visual_search(query, folder)
 
