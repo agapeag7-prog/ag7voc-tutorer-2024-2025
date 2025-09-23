@@ -1173,7 +1173,17 @@ class VoiceConfigWidget(QWidget):
         speed_slider = QSlider(Qt.Horizontal)
         speed_slider.setMinimum(100)
         speed_slider.setMaximum(300)
-        speed_slider.setValue(voice_manager.tts_engine.getProperty('rate'))
+        try:
+            if hasattr(voice_manager, 'get_rate'):
+                current_rate = voice_manager.get_rate()
+                speed_slider.setValue(int(current_rate))
+            else:
+                speed_slider.setValue(160)  # Valeur par défaut
+                print("VoiceManager.get_rate() non disponible")
+        except Exception as e:
+            print(f"Erreur configuration vitesse vocale: {e}")
+            speed_slider.setValue(160)
+            
         speed_slider.setTickInterval(10)
         speed_slider.setTickPosition(QSlider.TicksBelow)
         layout.addWidget(speed_label)

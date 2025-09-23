@@ -27,11 +27,26 @@ from datetime import datetime
 
 from file_explorer import open_file_explorer as file_explorer_open, VoiceControlledFileExplorer
 
-from ai_engine import DQNAgent, ACTIONS, compute_reward, get_current_state, analyze_user_sentiment
+# from ai_engine import DQNAgent, ACTIONS, compute_reward, get_current_state, analyze_user_sentiment
 
 from voice_preferences import voice_prefs
 
-from voice_manager import voice_manager
+try:
+    from voice_manager import voice_manager
+    print("VoiceManager chargé avec succès")
+except ImportError as e:
+    print(f"VoiceManager non disponible: {e}")
+    
+    # Créer un fallback
+    class FallbackVoiceManager:
+        def speak(self, text):
+            print(f"TTS: {text}")
+        def get_rate(self):
+            return 160
+        def set_rate(self, rate):
+            pass
+    
+    voice_manager = FallbackVoiceManager()
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
@@ -102,6 +117,22 @@ FORBIDDEN_FOLDERS = [
     "C:\\$Recycle.Bin",
     "C:\\System Volume Information"
 ]
+
+try:
+    nlp = spacy.load("fr_core_news_sm")
+    print("Modèle spaCy français chargé avec succès")
+except OSError:
+    print("Téléchargement du modèle spaCy français...")
+    try:
+        subprocess.run([sys.executable, "-m", "spacy", "download", "fr_core_news_sm"], check=True)
+        nlp = spacy.load("fr_core_news_sm")
+        print("Modèle spaCy téléchargé et chargé")
+    except:
+        print("Erreur téléchargement spaCy, utilisation de modèle minimal")
+        nlp = spacy.blank("fr")
+except Exception as e:
+    print(f"Erreur spaCy: {e}, utilisation de modèle minimal")
+    nlp = spacy.blank("fr")
 
 class AssistantSignals(QObject):
     show_suggestions = pyqtSignal(object, object)
@@ -731,10 +762,14 @@ for voice in voices:
         break
 
 def speak(text):
+    """Utilise le VoiceManager pour parler"""
     display_on_front(f"[Assistant] {text}")
     try:
-        tts_engine.say(text)
-        tts_engine.runAndWait()
+        if voice_manager and hasattr(voice_manager, 'speak'):
+            voice_manager.speak(text)
+        else:
+            tts_engine.say(text)
+            tts_engine.runAndWait()
     except Exception as e:
         display_on_front(f"[Assistant] (Erreur vocalisation : {e})")
 
@@ -1962,6 +1997,43 @@ def get_command_suggestions(command, top_n=3):
     suggestions.sort(key=lambda x: x[3], reverse=True)
     return suggestions[:top_n]
 
+def get_intent_fallback(command):
+    """Méthode de secours pour la reconnaissance d'intention"""
+    command_lower = command.lower()
+    
+    keyword_mapping = {
+        "heure": "get_time",
+        "date": "get_date", 
+        "aide": "show_help",
+        "ouvre": "launch_app",
+        "lance": "launch_app",
+        "cherche": "search_web",
+        "recherche": "search_files",
+        "fichier": "search_files",
+        "dossier": "search_files",
+        "écris": "write_file",
+        "lis": "read_file",
+        "supprime": "delete_file",
+        "crée": "create_folder",
+        "liste": "list_files",
+        "renomme": "rename_file",
+        "déplace": "move_file",
+        "éteins": "shutdown",
+        "redémarre": "restart",
+        "verrouille": "lock",
+        "email": "send_email",
+        "météo": "weather",
+        "système": "system_info",
+        "historique": "historique"
+    }
+    
+    for keyword, intent in keyword_mapping.items():
+        if keyword in command_lower:
+            print(f"FALLBACK: Mot-clé '{keyword}' détecté -> intention '{intent}'")
+            return intent
+    
+    return None
+
 def similar(a, b):
     a_words = set(a.split())
     b_words = set(b.split())
@@ -1981,7 +2053,10 @@ def get_intent_spacy(command):
                 return intent
     return None
 
-def get_intent_spacy_similarity(command, threshold=0.75):
+def get_intent_spacy_similarity(command, threshold=0.65):  # Baissé de 0.75 à 0.65
+    if not nlp or command.strip() == "":
+        return None
+        
     doc_cmd = nlp(command.lower())
     best_intent = None
     best_score = 0.0
@@ -1994,6 +2069,8 @@ def get_intent_spacy_similarity(command, threshold=0.75):
                 best_score = score
                 best_intent = intent
 
+    print(f"DEBUG: Meilleur score de similarité: {best_score:.3f} pour '{command}'")
+    
     if best_score >= threshold:
         return best_intent
     else:
@@ -2328,10 +2405,42 @@ def process_voice_command(command, forced_intent=None):
     global dqn_agent
     global DQN_AVAILABLE
     
+    print(f"=== TRAITEMENT: '{command}' ===")
+    
+    command = command.strip()
+    if not command:
+        speak("Je n'ai rien entendu.")
+        return
+    
     start_time = time.time()
     command_complexity = len(command.split()) / 20.0
+    success = True
+    intent = None
     
-    #CORRECTION: Import sécurisé avec gestion d'erreur
+    if forced_intent:
+        intent = forced_intent
+        print(f"Intention forcée: {intent}")
+    else:
+        intent = get_intent_spacy_similarity(command)
+        print(f"Intention détectée: {intent}")
+    
+    if not intent:
+        print("Aucune intention détectée, tentative de fallback...")
+        intent = get_intent_fallback(command)
+        
+    if not intent:
+        speak("Désolé, je n'ai pas compris la commande. Pouvez-vous reformuler ?")
+        
+        suggestions = get_command_suggestions(command)
+        if suggestions:
+            speak("Voici quelques suggestions :")
+            for i, (kw, label, intent_sugg, score) in enumerate(suggestions[:3], 1):
+                speak(f"{i}. {label}")
+        
+        return
+                
+    success = True
+    
     try:
         # Vérifier si c'est une commande fichiers/dossiers
         file_keywords = [
@@ -2345,29 +2454,40 @@ def process_voice_command(command, forced_intent=None):
         if any(keyword in command_lower for keyword in file_keywords):
             print(f"Tentative de traitement comme commande fichier: {command}")
             
-            # Import dynamique pour éviter les problèmes de circularité
+            # Import dynamique sécurisé
             try:
-                from vocal_file_system import vocal_file_handler
-                result = vocal_file_handler.handle_command(command)
+                # Vérifier si le module existe
+                import importlib
+                vocal_file_system_spec = importlib.util.find_spec("vocal_file_system")
                 
-                if result is not None and result != False:
-                    print(f"Commande fichiers traitée avec succès: {command}")
+                if vocal_file_system_spec is not None:
+                    from vocal_file_system import vocal_file_handler
                     
-                    # Enregistrement dans l'historique
-                    COMMAND_HISTORY.append((command, "file_operation"))
-                    save_history()
-                    
-                    speak("Opération sur les fichiers terminée.")
-                    return "Commande fichiers exécutée"
+                    # Vérifier que la fonction existe
+                    if hasattr(vocal_file_handler, 'handle_command'):
+                        result = vocal_file_handler.handle_command(command)
+                        
+                        if result is not None and result != False:
+                            print(f"Commande fichiers traitée avec succès: {command}")
+                            
+                            # Enregistrement dans l'historique
+                            COMMAND_HISTORY.append((command, "file_operation"))
+                            save_history()
+                            
+                            speak("Opération sur les fichiers terminée.")
+                            return "Commande fichiers exécutée"
+                        else:
+                            print(f"La commande fichiers a retourné: {result}")
+                    else:
+                        print("Fonction handle_command non trouvée dans vocal_file_handler")
                 else:
-                    print(f"La commande fichiers a retourné: {result}")
-                    # Continuer avec le traitement normal
+                    print("Module vocal_file_system non trouvé")
                     
             except ImportError as e:
                 print(f"Import impossible du gestionnaire fichiers: {e}")
             except Exception as e:
                 print(f"Erreur gestionnaire fichiers: {e}")
-                
+                    
     except Exception as e:
         print(f"Erreur générale dans la détection fichiers: {e}")
     
@@ -2396,37 +2516,186 @@ def process_voice_command(command, forced_intent=None):
                 set_current_search_index(new_index)
                 speak(f"Résultat {new_index + 1} sur {len(results)}")
                 return "Navigation précédente"
-    
-    
-    if 'DQN_AVAILABLE' not in globals():
-        DQN_AVAILABLE = False
-    
-    if forced_intent:
-        intent = forced_intent
-    else:
-        intent = get_intent_spacy_similarity(command)
-    
-    if not intent:
-        speak("Désolé, je n'ai pas compris la commande.")
+    def process_ai_feedback(command, success, start_time, command_complexity):
+        """Traite le feedback pour l'IA après chaque commande"""
+        global dqn_agent
+        global DQN_AVAILABLE
         
-        if DQN_AVAILABLE and dqn_agent:
-            try:
-                next_state = get_current_state(0, time.localtime().tm_hour/24, 
-                                             psutil.cpu_percent()/100, 
-                                             psutil.virtual_memory().percent/100, 
-                                             0.5)
-                reward = compute_reward("negatif", time.time() - start_time, command_complexity)
-                dqn_agent.remember(dqn_agent.state, ACTIONS.index("demander_precisions"), reward, next_state, False)
-                dqn_agent.state = next_state
-            except Exception as e:
-                print(f"Erreur DQN dans traitement d'erreur: {e}")
+        if not DQN_AVAILABLE or not dqn_agent:
+            return
         
-        return
+        try:
+            execution_time = time.time() - start_time
+            
+            # État actuel
+            current_hour = time.localtime().tm_hour / 24.0
+            cpu_usage = psutil.cpu_percent() / 100.0
+            memory_usage = psutil.virtual_memory().percent / 100.0
+            user_mood = 0.7 if success else 0.3  # Humeur basée sur le succès
+            
+            next_state = get_current_state(
+                1 if success else 0, 
+                current_hour, 
+                cpu_usage, 
+                memory_usage, 
+                user_mood
+            )
+            
+            # Récompense basée sur le succès et le temps
+            feedback_type = "positif" if success else "negatif"
+            reward = compute_reward(feedback_type, execution_time, command_complexity)
+            
+            # Action exécutée (index dans ACTIONS)
+            action_idx = ACTIONS.index("executer_commande")
+            
+            # Mémoriser l'expérience
+            dqn_agent.remember(dqn_agent.state, action_idx, reward, next_state, False)
+            dqn_agent.state = next_state
+            
+            print(f"Feedback IA: succès={success}, temps={execution_time:.2f}s, reward={reward}")
+            
+            # DEMANDE DE FEEDBACK UTILISATEUR SI ACTIVÉ
+            if voice_prefs.get_preference("auto_feedback"):
+                ask_user_feedback(command, success, execution_time)
                 
-    success = True
+        except Exception as e:
+            print(f"Erreur feedback IA: {e}")
+
+    def ask_user_feedback(command, success, execution_time):
+        """Demande un feedback à l'utilisateur"""
+        try:
+            if success:
+                if execution_time > 5.0:  # Si c'est long
+                    speak("L'opération a pris un certain temps. Cela vous convient-il ?")
+                else:
+                    speak("Cela vous convient-il ?")
+            else:
+                speak("Je n'ai pas pu bien exécuter cette commande. Avez-vous des suggestions ?")
+            
+            # Écouter la réponse
+            feedback = listen(timeout=10)
+            
+            if feedback:
+                process_user_feedback(feedback, command, success)
+            else:
+                speak("Je n'ai pas entendu de réponse. N'hésitez pas à me donner votre avis plus tard.")
+                
+        except Exception as e:
+            print(f"Erreur demande feedback: {e}")
+
+    def process_user_feedback(feedback_text, original_command, was_successful):
+        """Traite le feedback utilisateur pour l'IA"""
+        global dqn_agent
+        
+        if not DQN_AVAILABLE or not dqn_agent:
+            return
+        
+        try:
+            # Analyser le sentiment
+            user_mood = analyze_user_sentiment(feedback_text)
+            
+            # Déterminer le type de feedback
+            if user_mood > 0.7:
+                feedback_type = "positif"
+                reward_bonus = 5.0
+            elif user_mood < 0.3:
+                feedback_type = "negatif" 
+                reward_bonus = -3.0
+            else:
+                feedback_type = "neutre"
+                reward_bonus = 1.0
+            
+            # Calculer la récompense finale
+            complexity = len(original_command.split()) / 20.0
+            final_reward = compute_reward(feedback_type, 0, complexity) + reward_bonus
+            
+            # Mettre à jour l'agent
+            action_idx = ACTIONS.index("executer_commande")
+            dqn_agent.remember(dqn_agent.state, action_idx, final_reward, dqn_agent.state, True)
+            
+            print(f"Feedback utilisateur: humeur={user_mood:.2f}, type={feedback_type}, reward={final_reward}")
+            
+            # Sauvegarder le modèle si le feedback est significatif
+            if abs(reward_bonus) > 2.0:
+                dqn_agent.save_model()
+                print("Modèle IA sauvegardé après feedback important")
+                
+        except Exception as e:
+            print(f"Erreur traitement feedback: {e}")
+        
+        return "Commande exécutée"  # ou le résultat approprié
+
+    def provide_contextual_suggestions(command, intent, success):
+        """Fournit des suggestions basées sur le contexte"""
+        
+        # SUGGESTIONS APRÈS UNE COMMANDE
+        if success:
+            suggestions = generate_success_suggestions(command, intent)
+        else:
+            suggestions = generate_alternative_suggestions(command, intent)
+        
+        if suggestions:
+            speak(suggestions["message"])
+            
+            # Afficher dans l'interface
+            if FRONT_DISPLAY_CALLBACK:
+                FRONT_DISPLAY_CALLBACK(f"💡 Suggestion IA: {suggestions['suggestion']}")
+            
+            return suggestions
+        return None
+
+    def generate_success_suggestions(command, intent):
+        """Génère des suggestions après une commande réussie"""
+        suggestions_map = {
+            "search_files": {
+                "message": "Je peux aussi rechercher dans des dossiers spécifiques ou filtrer par type de fichier.",
+                "suggestion": "Essayez 'recherche les documents PDF dans le dossier Travail'"
+            },
+            "create_folder": {
+                "message": "Voulez-vous ajouter des fichiers dans ce dossier ou le renommer ?",
+                "suggestion": "Commandes disponibles: 'ajoute des fichiers', 'renomme le dossier'"
+            },
+            "open_explorer": {
+                "message": "Je peux aussi lister le contenu, rechercher des fichiers ou obtenir des informations.",
+                "suggestion": "Dites 'liste les fichiers' ou 'info sur ce dossier'"
+            },
+            "read_file": {
+                "message": "Je peux aussi modifier le fichier, le copier ou rechercher du texte spécifique.",
+                "suggestion": "Essayez 'cherche le mot X dans le fichier' ou 'modifie cette ligne'"
+            }
+        }
+        
+        return suggestions_map.get(intent)
+
+    def generate_alternative_suggestions(command, intent):
+        """Suggestions quand une commande échoue"""
+        alternatives_map = {
+            "search_files": {
+                "message": "Essayez d'être plus spécifique sur le nom ou l'emplacement du fichier.",
+                "suggestion": "Exemple: 'recherche rapport.txt dans le dossier Documents'"
+            },
+            "launch_app": {
+                "message": "Je n'ai pas trouvé cette application. Voulez-vous que je la recherche sur internet ?",
+                "suggestion": "Dites 'recherche [nom application] sur internet'"
+            },
+            "file_operations": {
+                "message": "Assurez-vous que le fichier existe et que vous avez les permissions nécessaires.",
+                "suggestion": "Vérifiez le nom exact et l'emplacement du fichier"
+            }
+        }
+        
+        return alternatives_map.get(intent)
     
     try:
-        if vocal_file_handler.handle_command(command):
+        vocal_handler_available = False
+        try:
+            from vocal_file_system import vocal_file_handler
+            if hasattr(vocal_file_handler, 'handle_command'):
+                vocal_handler_available = True
+        except:
+            vocal_handler_available = False
+        
+        if vocal_handler_available and vocal_file_handler.handle_command(command):
             return
         elif intent == "add_event":
             date_str = extract_date(command)
@@ -2630,8 +2899,13 @@ def process_voice_command(command, forced_intent=None):
         success = False
         logging.error(f"Erreur exécution commande: {e}")
         speak("Désolé, une erreur s'est produite.")
-        print(f"Erreur détaillée: {e}")
-
+        
+    if 'DQN_AVAILABLE' not in globals():
+        DQN_AVAILABLE = False
+    
+    
+    process_ai_feedback(command, success, start_time, command_complexity)
+    
     if DQN_AVAILABLE and dqn_agent:
         try:
             execution_time = time.time() - start_time

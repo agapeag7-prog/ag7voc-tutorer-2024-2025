@@ -734,5 +734,89 @@
   [
     "explorateur fichier vocal",
     "open_explorer"
+  ],
+  [
+    "ouvre le dossier bureau",
+    "file_operation"
+  ],
+  [
+    "ouvre le dossier de Kim",
+    null
+  ],
+  [
+    "ouvre le dossier document",
+    null
+  ],
+  [
+    "liste les fichiers du dossier Documents",
+    "file_operation"
+  ],
+  [
+    "cherche les fichiers DOX",
+    null
+  ],
+  [
+    "cherche sur internet bonjour",
+    null
+  ],
+  [
+    "chercher sur internet bonjour",
+    null
+  ],
+  [
+    "recherche Céline Dion",
+    null
+  ],
+  [
+    "recherche Céline Dion",
+    null
+  ],
+  [
+    "cherche les fichiers",
+    null
+  ],
+  [
+    "recherche fichier",
+    null
+  ],
+  [
+    "ouvre bloc-note",
+    null
+  ],
+  [
+    "ouvre vscode",
+    null
+  ],
+  [
+    "trouve les dossiers",
+    null
+  ],
+  [
+    "cherche les dossiers musique",
+    "file_operation"
+  ],
+  [
+    "recherche fichier",
+    null
+  ],
+  [
+    "liste de tous les documents",
+    "file_operation"
+  ],
+  [
+    "liste des fichiers des dossiers bureau",
+    "file_operation"
+  ],
+  [
+    "mise en veille",
+    null
+  ],
+  [
+    "on est quel jour",
+    "get_date"
+  ],
+  [
+    "ouvre calculatrice",
+    "launch_app"
   ]
 ]
