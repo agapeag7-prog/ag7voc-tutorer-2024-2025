@@ -1070,5 +1070,53 @@
   [
     "suggestion",
     "auto_search"
+  ],
+  [
+    "assistant presque parfait",
+    "unknown_command"
+  ],
+  [
+    "assistant presque parfait",
+    "unknown_command"
+  ],
+  [
+    "après correction erreurs",
+    "keyboard_control"
+  ],
+  [
+    "après correction erreurs",
+    "keyboard_control"
+  ],
+  [
+    "cherche",
+    "search_web"
+  ],
+  [
+    "réduire fenêtre",
+    "window_management"
+  ],
+  [
+    "réduire la fenêtre commande",
+    "delete_file"
+  ],
+  [
+    "réduire la fenêtre commande",
+    "delete_file"
+  ],
+  [
+    "terminal admin",
+    "developer_tools"
+  ],
+  [
+    "terminal admin",
+    "developer_tools"
+  ],
+  [
+    "commande non reconnue",
+    "unknown_command"
+  ],
+  [
+    "commande non reconnue",
+    "unknown_command"
   ]
 ]

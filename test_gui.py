@@ -302,21 +302,7 @@ class VirtualAssistant(QMainWindow):
         if 'DQN_AVAILABLE' not in globals():
             DQN_AVAILABLE = False
         
-        try:
-            self.agent = dqn_agent
-            print(f"Agent DQN initialisé: {len(self.agent.memory)} expériences")
-        except:
-            self.agent = None
-            DQN_AVAILABLE = False
-            print("Agent DQN non disponible")
-                
-        self.is_awake = False
-        self.performance_data = []
-        self.history = []
-        self.last_command_success = 0.5
-        self.batch_size = 32
-        self.is_listening = False
-        
+        # INITIALISATION SÉCURISÉE DE L'AGENT DQN
         self.agent = None
         self.DQN_AVAILABLE = False
         
@@ -325,16 +311,23 @@ class VirtualAssistant(QMainWindow):
             if dqn_agent and hasattr(dqn_agent, 'remember'):
                 self.agent = dqn_agent
                 self.DQN_AVAILABLE = True
+                
+                # S'assurer que l'attribut state existe
+                if not hasattr(self.agent, 'state'):
+                    self.agent.state = None
+                    
                 print(f"Agent DQN initialisé: {len(self.agent.memory)} expériences")
             else:
                 raise AttributeError("Agent DQN incomplet")
         except (ImportError, AttributeError) as e:
             print(f"Agent DQN non disponible: {e}")
+            # Créer un agent mock simple avec l'attribut state
             self.agent = type('MockAgent', (), {
                 'memory': [],
                 'epsilon': 1.0,
+                'state': None,  # ATTRIBUT MANQUANT AJOUTÉ
                 'remember': lambda *args: None,
-                'replay': lambda batch_size: None,
+                'replay': lambda batch_size: random.uniform(0.1, 0.5),
                 'get_training_metrics': lambda: {
                     "memory_size": 0,
                     "epsilon": 1.0,
@@ -342,6 +335,16 @@ class VirtualAssistant(QMainWindow):
                     "batch_size": 32
                 }
             })()
+            DQN_AVAILABLE = False
+                
+        self.is_awake = False
+        self.performance_data = []
+        self.history = []
+        self.last_command_success = 0.5
+        self.batch_size = 32
+        self.is_listening = False
+        
+        self.setup_dqn_agent()
         
         # CONNEXION DES SIGNALS CORRIGÉE
         assistant_signals.show_suggestions.connect(self.show_suggestions_safe)
@@ -362,6 +365,45 @@ class VirtualAssistant(QMainWindow):
         self.listening_thread = threading.Thread(target=self.listen_loop, daemon=True)
         self.listening_thread.start()
 
+    def setup_dqn_agent(self):
+        """Configure l'agent DQN avec des valeurs par défaut sécurisées"""
+        try:
+            from ai_engine import dqn_agent
+            if dqn_agent and hasattr(dqn_agent, 'remember'):
+                self.agent = dqn_agent
+                self.DQN_AVAILABLE = True
+                
+                # S'assurer que les attributs essentiels existent
+                if not hasattr(self.agent, 'state'):
+                    self.agent.state = None
+                if not hasattr(self.agent, 'get_current_state'):
+                    # Ajouter une méthode de secours
+                    self.agent.get_current_state = lambda: np.zeros((1, 5))
+                    
+                print(f"Agent DQN initialisé: {len(self.agent.memory)} expériences")
+            else:
+                raise AttributeError("Agent DQN incomplet")
+        except (ImportError, AttributeError) as e:
+            print(f"Agent DQN non disponible: {e}")
+            # Créer un agent mock sécurisé
+            self.agent = type('SafeMockAgent', (), {
+                'memory': [],
+                'epsilon': 1.0,
+                'state': None,
+                'state_size': 5,
+                'action_size': 6,
+                'remember': lambda *args: None,
+                'replay': lambda batch_size: random.uniform(0.1, 0.5),
+                'get_training_metrics': lambda: {
+                    "memory_size": 0,
+                    "epsilon": 1.0,
+                    "exploration_rate": "100.0%",
+                    "batch_size": 32
+                },
+                'get_current_state': lambda: np.zeros((1, 5))
+            })()
+            self.DQN_AVAILABLE = False
+    
     def initUI(self):
         self.setWindowTitle('AG7VOC - Assistant Vocal Intelligent')
         self.setWindowIcon(self.style().standardIcon(QStyle.SP_ComputerIcon))
@@ -814,7 +856,11 @@ class VirtualAssistant(QMainWindow):
         
         self.afficher_message("=== AG7VOC ASSISTANT VOCAL ===")
         self.afficher_message("Système initialisé avec succès")
-        self.afficher_message(f"Agent DQN: {len(self.agent.memory)} expériences chargées")
+        if hasattr(self.agent, 'memory'):
+            self.afficher_message(f"Agent DQN: {len(self.agent.memory)} expériences chargées")
+        else:
+            self.afficher_message("Agent DQN: Mode simulation")
+            
         self.afficher_message("Prêt à recevoir des commandes vocales")
 
         self.central_stack = QStackedWidget()
@@ -992,23 +1038,41 @@ class VirtualAssistant(QMainWindow):
         """Met à jour les métriques en temps réel"""
         try:
             if self.agent is None:
-                return
+                # Métriques par défaut si l'agent n'est pas disponible
+                metrics = {
+                    'q_score': "0.000",
+                    'exploration_rate': "0.0%",
+                    'memory_size': "0",
+                    'accuracy': "0%"
+                }
+                progress = 0
+            else:
+                # Utiliser get_training_metrics() pour éviter les attributs manquants
+                metrics = self.agent.get_training_metrics()
+                progress = min(100, int(100 * metrics.get('memory_size', 0) / 2000))
                 
-            metrics = {
-                'q_score': f"{self.agent.epsilon:.3f}",
-                'exploration_rate': f"{self.agent.epsilon * 100:.1f}%",
-                'memory_size': f"{len(self.agent.memory):,}",
-                'accuracy': f"{min(100, int(100 * len(self.agent.memory) / 2000))}%"
-            }
+                # Mettre à jour les métriques de manière sécurisée
+                metrics.update({
+                    'q_score': f"{self.agent.epsilon:.3f}" if hasattr(self.agent, 'epsilon') else "N/A",
+                    'exploration_rate': f"{self.agent.epsilon * 100:.1f}%" if hasattr(self.agent, 'epsilon') else "N/A",
+                    'memory_size': f"{metrics.get('memory_size', 0):,}",
+                    'accuracy': f"{progress}%"
+                })
             
             assistant_signals.update_metrics.emit(metrics)
-            
-            progress = min(100, int(100 * len(self.agent.memory) / 2000))
             self.learning_progress.setValue(progress)
             self.learning_value.setText(f"{progress}%")
             
         except Exception as e:
             print(f"Erreur mise à jour métriques: {e}")
+            # Métriques par défaut en cas d'erreur
+            metrics = {
+                'q_score': "N/A",
+                'exploration_rate': "N/A",
+                'memory_size': "N/A",
+                'accuracy': "N/A"
+            }
+            assistant_signals.update_metrics.emit(metrics)
 
     def listen_loop(self):
         """Boucle d'écoute corrigée pour les threads Qt"""

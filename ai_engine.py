@@ -25,6 +25,7 @@ class DQNAgent:
         self.batch_size = 64
         self.model_file = model_file
         self.memory_file = memory_file
+        self.state = None
         
         self.model = self._build_model()
         self.target_model = self._build_model()
@@ -36,6 +37,14 @@ class DQNAgent:
         if DEBUG_MODE:
             print(f"Mode DEBUG: memory_file={memory_file}")
             print(f"Mode DEBUG: model_file={model_file}")
+
+    # Ajouter aussi cette méthode pour récupérer l'état
+    def get_current_state(self):
+        """Retourne l'état actuel ou un état par défaut"""
+        if self.state is not None:
+            return self.state
+        # Retourner un état par défaut
+        return np.zeros((1, self.state_size))
         
     def _build_model(self):
         """Construction du réseau de neurones"""
