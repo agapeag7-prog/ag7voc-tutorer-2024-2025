@@ -57,5 +57,5 @@ class VoicePreferences:
         except Exception as e:
             print(f"Erreur sauvegarde préférences: {e}")
             return False
-
+    
 voice_prefs = VoicePreferences()

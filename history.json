@@ -858,5 +858,217 @@
   [
     "informations système",
     "system_info"
+  ],
+  [
+    "recherche YouTube",
+    "search_web"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "liste les fichiers du dossier bureau",
+    "file_operation"
+  ],
+  [
+    "ouvre le dossier desktop",
+    "file_navigation"
+  ],
+  [
+    "recherche fichier",
+    "search_files"
+  ],
+  [
+    "envoie mail",
+    "send_email"
+  ],
+  [
+    "afficher les événements",
+    "show_events"
+  ],
+  [
+    "ouvre les dossiers bureau",
+    "file_operation"
+  ],
+  [
+    "déplacer un fichier",
+    "add_event"
+  ],
+  [
+    "capture d'écran",
+    "lock"
+  ],
+  [
+    "le club bureau virtuel",
+    "file_operation"
+  ],
+  [
+    "bureau virtuel",
+    "file_operation"
+  ],
+  [
+    "assistant",
+    "accessibility_commands"
+  ],
+  [
+    "bureau suivant",
+    "file_operation"
+  ],
+  [
+    "décalage gauche",
+    "window_management"
+  ],
+  [
+    "réduire fenêtre",
+    "window_management"
+  ],
+  [
+    "oui",
+    "unknown_command"
+  ],
+  [
+    "oui",
+    "unknown_command"
+  ],
+  [
+    "agrandir la fenêtre",
+    "lock"
+  ],
+  [
+    "agrandir la fenêtre",
+    "lock"
+  ],
+  [
+    "ouvre le bloc-notes",
+    "launch_app"
+  ],
+  [
+    "décalage fenêtre à gauche",
+    "modify_event"
+  ],
+  [
+    "décalage fenêtre à gauche",
+    "modify_event"
+  ],
+  [
+    "minimiser fenêtre",
+    "window_management"
+  ],
+  [
+    "annuler",
+    "delete_event"
+  ],
+  [
+    "annuler",
+    "delete_event"
+  ],
+  [
+    "minimiser toutes les fenêtres",
+    "window_management"
+  ],
+  [
+    "minimiser fenêtre",
+    "window_management"
+  ],
+  [
+    "décalage à droite",
+    "modify_event"
+  ],
+  [
+    "décalage à droite",
+    "modify_event"
+  ],
+  [
+    "décalage fenêtre à droite",
+    "modify_event"
+  ],
+  [
+    "décalage fenêtre à droite",
+    "modify_event"
+  ],
+  [
+    "veuillez préciser l'identifiant et le nouveau texte",
+    "modify_event"
+  ],
+  [
+    "décalage fenêtre à droite",
+    "modify_event"
+  ],
+  [
+    "décalage fenêtre à droite",
+    "modify_event"
+  ],
+  [
+    "liste des fichiers du dossier bureau",
+    "file_operation"
+  ],
+  [
+    "liste des fichiers dossier bureau",
+    "file_operation"
+  ],
+  [
+    "fermer toutes les fenêtres",
+    "list_drives"
+  ],
+  [
+    "fermer toutes les fenêtres",
+    "list_drives"
+  ],
+  [
+    "loupe plein écran",
+    "accessibility_control"
+  ],
+  [
+    "volume à 50",
+    "media_pro"
+  ],
+  [
+    "volume à 50",
+    "media_pro"
+  ],
+  [
+    "volume à 50 %",
+    "media_pro"
+  ],
+  [
+    "volume à 50 %",
+    "media_pro"
+  ],
+  [
+    "je comprends je comprends",
+    "unknown_command"
+  ],
+  [
+    "je comprends je comprends",
+    "unknown_command"
+  ],
+  [
+    "cascade fenêtre",
+    "windows_expert"
+  ],
+  [
+    "cascade fenêtre",
+    "windows_expert"
+  ],
+  [
+    "déplacer écran à gauche",
+    "modify_event"
+  ],
+  [
+    "déplacer écran à gauche",
+    "modify_event"
+  ],
+  [
+    "ouvre dossier bureau",
+    "file_operation"
+  ],
+  [
+    "ouvrir dossier bureau connexion",
+    "file_operation"
+  ],
+  [
+    "suggestion",
+    "auto_search"
   ]
 ]

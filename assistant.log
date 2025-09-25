@@ -361,3 +361,7 @@ TypeError: create() missing 1 required positional argument: 'access_key'
 2025-09-23 01:56:42,021 [ERROR] Erreur exécution commande: local variable 'vocal_file_handler' referenced before assignment
 2025-09-23 16:24:08,190 [INFO] Événement ajouté : 2025-09-23 - déplacer un fichier
 2025-09-23 16:24:13,177 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-25 13:51:43,020 [INFO] Affichage des événements réussi.
+2025-09-25 13:51:48,217 [INFO] Feedback utilisateur : Incompréhensible
+2025-09-25 13:53:27,576 [INFO] Événement ajouté : 2025-09-25 - déplacer un fichier
+2025-09-25 13:53:37,397 [INFO] Feedback utilisateur : Incompréhensible

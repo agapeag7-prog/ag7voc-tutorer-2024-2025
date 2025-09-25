@@ -1,3 +1,14 @@
+try:
+    from quick_fix import nlp
+except:
+    class SimpleNLP:
+        def __init__(self):
+            self.ready = False
+        def __call__(self, text):
+            return type('Doc', (), {'similarity': lambda x: 0.5})()
+    nlp = SimpleNLP()
+
+import warnings
 import sqlite3
 import os
 import logging
@@ -6,7 +17,7 @@ import dateparser
 import speech_recognition as sr
 import numpy as np
 import torch
-import silero_vad
+
 import vosk
 import sounddevice as sd
 import queue
@@ -30,6 +41,34 @@ from file_explorer import open_file_explorer as file_explorer_open, VoiceControl
 # from ai_engine import DQNAgent, ACTIONS, compute_reward, get_current_state, analyze_user_sentiment
 
 from voice_preferences import voice_prefs
+from keyboard_controller import keyboard_controller
+
+import spacy
+
+def check_spacy_model():
+    """Vérifie que le modèle spaCy est correctement chargé"""
+    global nlp
+    
+    if nlp is None:
+        return False
+        
+    try:
+        test_doc = nlp("test")
+        if hasattr(test_doc, 'vector_norm'):
+            return test_doc.vector_norm > 0  # Modèle avec vecteurs
+        else:
+            return True
+    except:
+        return False
+
+try:
+    import torchaudio
+    if not torchaudio.list_audio_backends():
+        print("Avertissement: Torchaudio sans backend - désactivation")
+        torchaudio = None
+except ImportError:
+    torchaudio = None
+    print("Torchaudio non disponible - continuation sans")
 
 try:
     from voice_manager import voice_manager
@@ -37,7 +76,6 @@ try:
 except ImportError as e:
     print(f"VoiceManager non disponible: {e}")
     
-    # Créer un fallback
     class FallbackVoiceManager:
         def speak(self, text):
             print(f"TTS: {text}")
@@ -106,6 +144,8 @@ def check_ai_functions():
 AI_AVAILABLE = check_ai_functions()
 print(f"Statut IA: {'DISPONIBLE' if AI_AVAILABLE else 'INDISPONIBLE'}")
 
+SPACY_READY = check_spacy_model()
+print(f"Modèle spaCy prêt: {SPACY_READY}")
 
 FORBIDDEN_FOLDERS = [
     "C:\\Windows",
@@ -116,21 +156,52 @@ FORBIDDEN_FOLDERS = [
     "C:\\System Volume Information"
 ]
 
+nlp = None
+SPACY_READY = False
+
 try:
     nlp = spacy.load("fr_core_news_sm")
+    SPACY_READY = True
     print("Modèle spaCy français chargé avec succès")
 except OSError:
-    print("Téléchargement du modèle spaCy français...")
+    print("Modèle spaCy non trouvé, téléchargement...")
     try:
+        import subprocess
         subprocess.run([sys.executable, "-m", "spacy", "download", "fr_core_news_sm"], check=True)
         nlp = spacy.load("fr_core_news_sm")
+        SPACY_READY = True
         print("Modèle spaCy téléchargé et chargé")
     except:
-        print("Erreur téléchargement spaCy, utilisation de modèle minimal")
+        print("Échec téléchargement spaCy, utilisation mode minimal")
         nlp = spacy.blank("fr")
 except Exception as e:
-    print(f"Erreur spaCy: {e}, utilisation de modèle minimal")
+    print(f"Erreur chargement spaCy: {e}")
     nlp = spacy.blank("fr")
+
+print(f"Statut spaCy: {'Prêt' if SPACY_READY else 'Mode minimal'}")
+
+
+RECOGNITION_MODE = "auto"
+def get_recognition_mode():
+    """Détermine le meilleur mode de reconnaissance"""
+    global RECOGNITION_MODE
+    
+    if RECOGNITION_MODE == "auto":
+        if check_internet_connection():
+            return "google"
+        else:
+            return "vosk"
+    return RECOGNITION_MODE
+
+def check_internet_connection(host="8.8.8.8", port=53, timeout=3):
+    """Vérifie la connectivité Internet"""
+    import socket
+    try:
+        socket.setdefaulttimeout(timeout)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+        return True
+    except:
+        return False
 
 class AssistantSignals(QObject):
     show_suggestions = pyqtSignal(object, object)
@@ -476,6 +547,102 @@ INTENTS = {
     ]
 }
 
+KEYBOARD_INTENTS = {
+    "keyboard_control": [
+        "verrouiller clavier", "minimiser fenêtres", "capture écran", "changer fenêtre",
+        "nouvel onglet", "fermer onglet", "actualiser page", "sauvegarder", "copier",
+        "coller", "annuler", "rétablir", "imprimer", "rechercher", "menu démarrer",
+        "gestionnaire tâches", "bureau virtuel", "plein écran", "navigation avant",
+        "navigation arrière", "ajouter favori", "fermer application", "snap fenêtre",
+        "organiser écran", "multitâche", "centre de notification"
+    ],
+    "media_control": [
+        "lecture musique", "pause musique", "piste suivante", "piste précédente",
+        "augmenter volume", "baisser volume", "couper le son", "son suivant",
+        "son précédent", "mute", "démute", "volume maximum", "volume minimum",
+        "lanceur musique", "arrêt musique", "avance rapide", "retour arrière",
+        "sous-titres", "langue audio", "qualité vidéo", "playlist suivante"
+    ],
+    "macro_commands": [
+        "macro travail", "préparer environnement", "fermeture sécurisée",
+        "enregistrer séquence", "rejouer séquence", "ouvrir suite bureautique",
+        "nettoyer session", "sauvegarde automatique", "backup documents",
+        "lancement applications", "configuration poste", "mode productivité",
+        "mode gaming", "mode présentation", "mode accessibilité", "template projet",
+        "workflow quotidien", "setup réunion", "cleanup système"
+    ],
+    "system_commands": [
+        "verrouillage urgence", "saisie sécurisée", "masquer fenêtres",
+        "nettoyage rapide", "logout vocal", "redémarrage express",
+        "veille système", "hibernation", "contrôle parental", "chiffrement fichier",
+        "nettoyage presse-papiers", "alerte sécurité", "isolation application"
+    ],
+    "accessibility_commands": [
+        "agrandir écran", "réduire écran", "inverser couleurs", "lecture texte",
+        "navigation clavier", "souris vocale", "loupe écran", "contraste élevé",
+        "guide vocal", "assistant handicap", "reconnaissance vocale", "audio description",
+        "sous-titres codés", "timer visuel", "assistant moteur"
+    ],
+    "productivity_commands": [
+        "timer productivité", "rappel tâche", "workflow personnalisé", "statistiques usage",
+        "optimisation temps", "mode concentration", "blocage distractions", "planification automatique",
+        "rapport quotidien", "objectifs journaliers", "analyse performance"
+    ],
+    
+    "system_control": [
+        "bureau virtuel","verrouiller ordinateur", "verrouiller pc", "mise en veille", 
+        "capture écran", "screenshot", "gestionnaire tâches",
+        "nouveau bureau", "bureau virtuel", "minimiser fenêtres",
+        "afficher bureau", "paramètres rapides", "nouveau bureau", "changer bureau", 
+        "verrouiller ordinateur", "capture écran", "gestionnaire tâches"
+    ],
+    "accessibility_control": [
+        "loupe agrandir", "zoom avant", "loupe réduire", "zoom arrière",
+        "inverser couleurs", "haut contraste", "lecture texte", 
+        "mode accessibilité", "navigation clavier", "contraste élevé"
+    ],
+    "window_management": [
+        "fenêtre gauche", "ancrer gauche", "fenêtre droite", "ancrer droite",
+        "maximiser fenêtre", "minimiser fenêtre", "organiser fenêtres",
+        "mosaïque fenêtres", "premier plan", "snap fenêtre"
+    ]
+}
+
+INTENTS.update(KEYBOARD_INTENTS)
+
+ADVANCED_KEYBOARD_INTENTS = {
+    "system_advanced": [
+        "veille hybride", "hibernation", "propriétés système", "mode privé",
+        "nettoyage disque", "redémarrage rapide", "arrêt urgence"
+    ],
+    "accessibility_premium": [
+        "loupe plein écran", "filtre lumière bleue", "clavier visuel", 
+        "sous-titres automatiques", "curseur surbrillance", "souris clavier"
+    ],
+    "windows_expert": [
+        "quadrillage fenêtres", "cascade fenêtres", "transparence fenêtre",
+        "déplacer écran gauche", "étendre écrans", "mode zen"
+    ],
+    "media_pro": [
+        "volume 50 pourcent", "saut 10 secondes", "enregistrement écran",
+        "micro muet", "vitesse lecture 1.5", "boucle piste"
+    ],
+    "office_advanced": [
+        "tableau automatique", "graphique rapide", "présentation plein écran",
+        "formatage conditionnel", "minuteur présentation"
+    ],
+    "developer_tools": [
+        "terminal admin", "commenter bloc", "formater code", "diagnostic réseau",
+        "wifi on off", "moniteur performance"
+    ],
+    "gaming_optimization": [
+        "mode jeu", "compteur fps", "capture instant", "plein écran jeu",
+        "souris gaming", "clavier gaming"
+    ]
+}
+
+INTENTS.update(ADVANCED_KEYBOARD_INTENTS)
+
 RECOGNITION_MODE = "google"
 VOSK_MODEL_PATH = os.path.join(os.path.dirname(__file__), "vosk-model-fr")
 
@@ -751,95 +918,148 @@ def clear_history():
 
 load_history()
 
-tts_engine = pyttsx3.init()
-tts_engine.setProperty('rate', 160)
-voices = tts_engine.getProperty('voices')
-for voice in voices:
-    if 'french' in voice.name.lower() or 'français' in voice.name.lower():
-        tts_engine.setProperty('voice', voice.id)
-        break
+_tts_engine = None
+
+def get_tts_engine():
+    """Singleton pour pyttsx3 pour éviter 'run loop already started'"""
+    global _tts_engine
+    if _tts_engine is None:
+        try:
+            _tts_engine = pyttsx3.init()
+            _tts_engine.setProperty('rate', 160)
+            voices = _tts_engine.getProperty('voices')
+            for voice in voices:
+                if 'french' in voice.name.lower() or 'français' in voice.name.lower():
+                    _tts_engine.setProperty('voice', voice.id)
+                    break
+        except Exception as e:
+            print(f"Erreur initialisation TTS: {e}")
+            _tts_engine = None
+    return _tts_engine
 
 def speak(text):
-    """Utilise le VoiceManager pour parler"""
+    """Utilise le VoiceManager ou pyttsx3 en singleton"""
     display_on_front(f"[Assistant] {text}")
     try:
         if voice_manager and hasattr(voice_manager, 'speak'):
             voice_manager.speak(text)
         else:
-            tts_engine.say(text)
-            tts_engine.runAndWait()
+            engine = get_tts_engine()
+            if engine:
+                engine.say(text)
+                engine.runAndWait()
+            else:
+                print(f"TTS: {text}")
+    except RuntimeError as e:
+        if "run loop already started" in str(e):
+            global _tts_engine
+            _tts_engine = None
+            speak(text)
+        else:
+            display_on_front(f"[Assistant] (Erreur vocalisation : {e})")
     except Exception as e:
         display_on_front(f"[Assistant] (Erreur vocalisation : {e})")
 
-def listen():
-    global RECOGNITION_MODE, VOSK_MODEL_PATH
+def listen(timeout=5):
+    """Fonction d'écoute avec fallback hors-ligne"""
+    global RECOGNITION_MODE
+    
+    # Essayer d'abord le mode configuré
     if RECOGNITION_MODE == "google":
-        r = sr.Recognizer()
-        with sr.Microphone() as source:
-            display_on_front("Assistant : Calibration du bruit ambiant...")
-            r.adjust_for_ambient_noise(source, duration=1)
-            display_on_front("Assistant : J'écoute (Online)...")
-            try:
-                audio = r.listen(source, timeout=10, phrase_time_limit=10)
-                command = r.recognize_google(audio, language="fr-FR")
-                return command
-            except sr.WaitTimeoutError:
-                display_on_front("Assistant : Aucune voix détectée.")
-                speak("Aucune voix détectée.")
-                return ""
-            except sr.UnknownValueError:
-                display_on_front("Assistant : Je n'ai pas compris.")
-                speak("Je n'ai pas compris.")
-                return ""
-            except sr.RequestError as e:
-                display_on_front(f"Assistant : Erreur de service vocal : {e}")
-                speak("Erreur de service vocal.")
-                return ""
-    elif RECOGNITION_MODE == "vosk":
-        import json
-        if not os.path.exists(VOSK_MODEL_PATH):
-            msg = (
-                f"Modèle Vosk non trouvé à l'emplacement : {VOSK_MODEL_PATH}\n"
-                "Veuillez télécharger un modèle français depuis https://alphacephei.com/vosk/models "
-                "et le placer dans ce dossier sous le nom 'vosk-model-fr'."
-            )
-            print(msg)
-            speak("Modèle Vosk non trouvé. Veuillez installer le modèle hors ligne.")
-            return ""
-        if not os.path.exists(os.path.join(VOSK_MODEL_PATH, "model.conf")):
-            msg = (
-                f"Le dossier {VOSK_MODEL_PATH} ne contient pas de modèle Vosk valide.\n"
-                "Vérifiez que le modèle est bien décompressé et complet."
-            )
-            print(msg)
-            speak("Le dossier du modèle Vosk est incomplet ou corrompu.")
-            return ""
         try:
-            model = vosk.Model(VOSK_MODEL_PATH)
+            print("Tentative reconnaissance Google...")
+            return listen_google(timeout)
         except Exception as e:
-            msg = f"Erreur lors du chargement du modèle Vosk : {e}"
-            print(msg)
-            speak("Erreur lors du chargement du modèle Vosk.")
-            return ""
+            print(f"Erreur Google, basculement vers Vosk: {e}")
+            RECOGNITION_MODE = "vosk"
+            return listen_vosk(timeout)
+    else:
+        return listen_vosk(timeout)
+
+def listen_google(timeout=5):
+    """Reconnaissance Google en ligne"""
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Calibration du bruit ambiant...")
+        r.adjust_for_ambient_noise(source, duration=0.5)
+        print("Écoute Google en cours...")
+        audio = r.listen(source, timeout=timeout, phrase_time_limit=5)
+        text = r.recognize_google(audio, language="fr-FR")
+        print(f"Google a reconnu: {text}")
+        return text
+
+def listen_vosk(timeout=10):
+    """Reconnaissance Vosk hors-ligne"""
+    try:
+        import json
+        from vosk import Model, KaldiRecognizer
+        import sounddevice as sd
+        import queue
+        
+        VOSK_MODEL_PATH = "vosk-model-fr"
+        if not os.path.exists(VOSK_MODEL_PATH):
+            print("Téléchargement du modèle Vosk français...")
+            # Lien pour téléchargement automatique
+            download_vosk_model()
+            
+        if not os.path.exists(VOSK_MODEL_PATH):
+            return ""  # Fallback si modèle non disponible
+            
+        model = Model(VOSK_MODEL_PATH)
         q = queue.Queue()
 
         def callback(indata, frames, time, status):
+            if status:
+                print(status)
             q.put(bytes(indata))
 
-        with sd.RawInputStream(samplerate=16000, blocksize=8000, dtype='int16',
-                               channels=1, callback=callback):
-            rec = vosk.KaldiRecognizer(model, 16000)
-            print("Assistant : J'écoute (offline, Vosk)...")
-            speak("J'écoute.")
-            while True:
+        samplerate = 16000
+        rec = KaldiRecognizer(model, samplerate)
+        
+        print("Écoute Vosk hors-ligne en cours...")
+        with sd.RawInputStream(samplerate=samplerate, blocksize=8000, 
+                             dtype='int16', channels=1, callback=callback):
+            start_time = time.time()
+            while time.time() - start_time < timeout:
                 data = q.get()
                 if rec.AcceptWaveform(data):
                     result = json.loads(rec.Result())
-                    text = result.get("text", "")
-                    return text
-    else:
-        speak("Mode de reconnaissance inconnu.")
+                    text = result.get("text", "").strip()
+                    if text:
+                        print(f"Vosk a reconnu: {text}")
+                        return text
+                elif time.time() - start_time > timeout/2 and not text:
+                    # Timeout partiel
+                    break
+                    
         return ""
+        
+    except Exception as e:
+        print(f"Erreur Vosk: {e}")
+        return ""
+
+def download_vosk_model():
+    """Télécharge le modèle Vosk français si absent"""
+    import urllib.request
+    import zipfile
+    
+    model_url = "https://alphacephei.com/vosk/models/vosk-model-fr-0.22.zip"
+    zip_path = "vosk-model-fr.zip"
+    
+    try:
+        print("Téléchargement du modèle Vosk...")
+        urllib.request.urlretrieve(model_url, zip_path)
+        
+        print("Extraction du modèle...")
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(".")
+            
+        os.rename("vosk-model-fr-0.22", "vosk-model-fr")
+        os.remove(zip_path)
+        print("Modèle Vosk installé avec succès")
+        
+    except Exception as e:
+        print(f"Erreur téléchargement Vosk: {e}")
 
 def ask_feedback():
     speak("Est-ce que cela vous convient ? Dites oui ou non.")
@@ -2051,28 +2271,93 @@ def get_intent_spacy(command):
                 return intent
     return None
 
-def get_intent_spacy_similarity(command, threshold=0.65):  # Baissé de 0.75 à 0.65
-    if not nlp or command.strip() == "":
-        return None
-        
-    doc_cmd = nlp(command.lower())
-    best_intent = None
-    best_score = 0.0
-
-    for intent, keywords in INTENTS.items():
-        for kw in keywords:
-            kw_doc = nlp(kw.lower())
-            score = doc_cmd.similarity(kw_doc)
-            if score > best_score:
-                best_score = score
-                best_intent = intent
-
-    print(f"DEBUG: Meilleur score de similarité: {best_score:.3f} pour '{command}'")
+def get_intent_spacy_similarity(command, threshold=0.65):
+    """Version corrigée avec gestion des vecteurs vides"""
+    global nlp, SPACY_READY
     
-    if best_score >= threshold:
-        return best_intent
-    else:
-        return None
+    if not SPACY_READY or not command.strip():
+        return get_intent_fallback(command)
+    
+    try:
+        doc_cmd = nlp(command.lower())
+        
+        # VÉRIFICATION AMÉLIORÉE DES VECTEURS
+        if (hasattr(doc_cmd, 'vector_norm') and doc_cmd.vector_norm == 0) or not doc_cmd:
+            print("Avertissement: Doc sans vecteurs - utilisation fallback")
+            return get_intent_fallback(command)
+            
+        best_intent = None
+        best_score = 0.0
+
+        for intent, keywords in INTENTS.items():
+            for kw in keywords:
+                try:
+                    kw_doc = nlp(kw.lower())
+                    
+                    # VÉRIFICATION POUR kw_doc AUSSI
+                    if (hasattr(kw_doc, 'vector_norm') and kw_doc.vector_norm == 0) or not kw_doc:
+                        continue
+                    
+                    # CALCUL SÉCURISÉ
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", message=".*empty vectors.*")
+                        score = doc_cmd.similarity(kw_doc)
+                    
+                    if score > best_score:
+                        best_score = score
+                        best_intent = intent
+                        
+                except Exception as e:
+                    continue
+
+        print(f"Similarité: {best_score:.3f} pour '{command}' -> {best_intent}")
+        
+        if best_score >= threshold and best_intent:
+            return best_intent
+        else:
+            return get_intent_fallback(command)
+            
+    except Exception as e:
+        print(f"Erreur similarité: {e}")
+        return get_intent_fallback(command)
+
+def get_intent_spacy_similarity_secure(command, threshold=0.65):
+    """Version sécurisée de la similarité spaCy"""
+    if not SPACY_READY or not command.strip():
+        return get_intent_fallback(command)
+        
+    try:
+        doc_cmd = nlp(command.lower())
+        
+        # Vérifier si le document est valide
+        if not doc_cmd or (hasattr(doc_cmd, 'vector_norm') and doc_cmd.vector_norm == 0):
+            return get_intent_fallback(command)
+            
+        best_intent = None
+        best_score = 0.0
+
+        for intent, keywords in INTENTS.items():
+            for kw in keywords:
+                try:
+                    kw_doc = nlp(kw.lower())
+                    
+                    if not kw_doc or (hasattr(kw_doc, 'vector_norm') and kw_doc.vector_norm == 0):
+                        continue
+                        
+                    score = doc_cmd.similarity(kw_doc)
+                    if score > best_score:
+                        best_score = score
+                        best_intent = intent
+                except:
+                    continue
+
+        print(f"Similarité spaCy: {best_score:.3f} pour '{command}' -> {best_intent}")
+        
+        return best_intent if best_score >= threshold else get_intent_fallback(command)
+        
+    except Exception as e:
+        print(f"Erreur similarité spaCy: {e}")
+        return get_intent_fallback(command)
 
 def get_top_intents_spacy_similarity(command, top_n=3):
     doc_cmd = nlp(command.lower())
@@ -2399,6 +2684,155 @@ def list_files(path=None):
         logging.error(f"Erreur listage fichiers dans {path} : {e}")
         return []
 
+
+def process_keyboard_command(command, intent):
+    """Nouvelle fonction pour gérer les commandes clavier"""    
+    try:
+        if intent == "system_control":
+            if any(word in command for word in ["verrouiller", "lock"]):
+                return keyboard_controller.verrouiller_ordinateur()
+            elif "capture" in command or "screenshot" in command:
+                return keyboard_controller.capture_ecran()
+            elif "minimiser" in command:
+                return keyboard_controller.minimiser_fenetres()
+            elif "bureau virtuel" in command:
+                return keyboard_controller.bureau_virtuel_nouveau()
+            elif "gestionnaire" in command:
+                return keyboard_controller.gestionnaire_taches()
+            elif "veille" in command:
+                return keyboard_controller.veille_systeme()
+                
+        elif intent == "accessibility_control":
+            if any(word in command for word in ["loupe", "zoom", "agrandir"]):
+                return keyboard_controller.loupe_agrandir()
+            elif any(word in command for word in ["réduire", "zoom arrière"]):
+                return keyboard_controller.loupe_reduire()
+            elif "inverser" in command or "contraste" in command:
+                return keyboard_controller.inverser_couleurs()
+            elif "lecture texte" in command:
+                return keyboard_controller.lecture_texte_selection()
+                
+        elif intent == "window_management":
+            if "gauche" in command:
+                return keyboard_controller.fenetre_snap_gauche()
+            elif "droite" in command:
+                return keyboard_controller.fenetre_snap_droite()
+            elif "maximiser" in command:
+                return keyboard_controller.fenetre_maximiser()
+            elif "minimiser" in command:
+                return keyboard_controller.fenetre_minimiser()
+            elif "mosaïque" in command or "organiser" in command:
+                return keyboard_controller.mosaique_fenetres()
+                
+        return "Commande clavier exécutée"
+        
+    except Exception as e:
+        return f"Erreur commande clavier: {str(e)}"
+
+def process_keyboard_command(command, intent):
+    """Nouvelle fonction pour gérer les commandes clavier"""
+    try:
+        
+        command_lower = command.lower()
+        
+        if intent == "system_control":
+            if "bureau virtuel" in command_lower or "nouveau bureau" in command_lower:
+                return keyboard_controller.bureau_virtuel_nouveau()
+            elif "bureau suivant" in command_lower:
+                return keyboard_controller.bureau_virtuel_suivant()
+            elif "bureau précédent" in command_lower:
+                return keyboard_controller.bureau_virtuel_precedent()
+            elif "fermer bureau" in command_lower:
+                return keyboard_controller.fermer_bureau_virtuel()
+            elif "verrouiller" in command_lower:
+                return keyboard_controller.verrouiller_ordinateur()
+            elif "capture" in command_lower or "screenshot" in command_lower:
+                return keyboard_controller.capture_ecran()
+            elif "gestionnaire" in command_lower or "tâches" in command_lower:
+                return keyboard_controller.gestionnaire_taches()
+            elif "minimiser" in command_lower:
+                return keyboard_controller.minimiser_toutes_fenetres()
+                
+        elif intent == "window_management":
+            if "gauche" in command_lower:
+                return keyboard_controller.fenetre_snap_gauche()
+            elif "droite" in command_lower:
+                return keyboard_controller.fenetre_snap_droite()
+            elif "maximiser" in command_lower:
+                return keyboard_controller.fenetre_maximiser()
+            elif "minimiser" in command_lower and "fenêtre" in command_lower:
+                return keyboard_controller.fenetre_minimiser()
+                
+        return "Commande système exécutée"
+        
+    except ImportError:
+        return "Module clavier non disponible"
+    except Exception as e:
+        return f"Erreur commande clavier: {str(e)}"
+
+def process_advanced_keyboard_command(command, intent):
+    """Gère les commandes clavier avancées"""
+    try:
+        from keyboard_controller_advanced import advanced_controller
+        
+        cmd_lower = command.lower()
+        
+        if intent == "system_advanced":
+            if "veille hybride" in cmd_lower:
+                return advanced_controller.veille_hybride()
+            elif "propriétés système" in cmd_lower:
+                return advanced_controller.proprietes_systeme()
+            elif "mode privé" in cmd_lower:
+                return advanced_controller.mode_prive()
+                
+        elif intent == "accessibility_premium":
+            if "loupe plein écran" in cmd_lower:
+                return advanced_controller.loupe_plein_ecran()
+            elif "filtre bleu" in cmd_lower or "lumière bleue" in cmd_lower:
+                return advanced_controller.filtre_bleu()
+            elif "clavier visuel" in cmd_lower:
+                return advanced_controller.clavier_visuel()
+                
+        elif intent == "windows_expert":
+            if "quadrillage" in cmd_lower:
+                return advanced_controller.quadrillage_4_fenetres()
+            elif "transparence" in cmd_lower:
+                niveau = 50  # Par défaut
+                if "25" in cmd_lower: niveau = 25
+                elif "75" in cmd_lower: niveau = 75
+                return advanced_controller.transparence_variable(niveau)
+                
+        elif intent == "media_pro":
+            if "volume" in cmd_lower and "pourcent" in cmd_lower:
+                # Extraire le pourcentage
+                import re
+                match = re.search(r'(\d+)\s*pourcent', cmd_lower)
+                niveau = int(match.group(1)) if match else 50
+                return advanced_controller.volume_precis(niveau)
+            elif "enregistrement écran" in cmd_lower:
+                return advanced_controller.enregistrement_ecran()
+                
+        elif intent == "office_advanced":
+            if "tableau automatique" in cmd_lower:
+                return advanced_controller.tableau_automatique()
+            elif "présentation plein écran" in cmd_lower:
+                return advanced_controller.presentation_plein_ecran()
+                
+        elif intent == "developer_tools":
+            if "terminal admin" in cmd_lower:
+                return advanced_controller.terminal_administrateur()
+            elif "commenter bloc" in cmd_lower:
+                return advanced_controller.commenter_bloc()
+                
+        elif intent == "gaming_optimization":
+            if "mode jeu" in cmd_lower:
+                return advanced_controller.mode_game()
+                
+        return "Commande avancée exécutée"
+        
+    except Exception as e:
+        return f"Erreur commande avancée: {e}"
+
 def process_voice_command(command, forced_intent=None):
     global dqn_agent
     global DQN_AVAILABLE
@@ -2410,15 +2844,52 @@ def process_voice_command(command, forced_intent=None):
         speak("Je n'ai rien entendu.")
         return
     
+    intent = None
     start_time = time.time()
     command_complexity = len(command.split()) / 20.0
     success = True
-    intent = None
     
     if forced_intent:
         intent = forced_intent
         print(f"Intention forcée: {intent}")
-    else:
+        
+    command_lower = command.lower()
+    if any(word in command_lower for word in ["bureau virtuel", "nouveau bureau", "verrouiller", "capture écran"]):
+        intent = "system_control"
+        print(f"Commande système détectée: {intent}")
+        
+        result = process_keyboard_command(command, intent)
+        speak(result)
+        return result
+    
+    advanced_intents = list(ADVANCED_KEYBOARD_INTENTS.keys())
+    if intent in advanced_intents:
+        result = process_advanced_keyboard_command(command, intent)
+        speak(result)
+        return result
+    
+    keyboard_keywords = [
+        "minimiser", "maximiser", "fenêtre", "bureau", "capture", "verrouiller",
+        "loupe", "snap", "ancrer", "virtuel", "gestionnaire", "veille"
+    ]
+    
+    if any(keyword in command_lower for keyword in keyboard_keywords):
+        if "minimiser" in command_lower and "fenêtre" in command_lower:
+            intent = "window_management"
+        elif "bureau virtuel" in command_lower or "nouveau bureau" in command_lower:
+            intent = "system_control"
+        elif "capture" in command_lower or "screenshot" in command_lower:
+            intent = "system_control"
+        elif "verrouiller" in command_lower:
+            intent = "system_control"
+        elif "loupe" in command_lower:
+            intent = "accessibility_control"
+        elif "snap" in command_lower or "ancrer" in command_lower:
+            intent = "window_management"
+        elif "gestionnaire" in command_lower and "tâches" in command_lower:
+            intent = "system_control"
+    
+    if not intent:
         intent = get_intent_spacy_similarity(command)
         print(f"Intention détectée: {intent}")
     
@@ -2434,60 +2905,60 @@ def process_voice_command(command, forced_intent=None):
             speak("Voici quelques suggestions :")
             for i, (kw, label, intent_sugg, score) in enumerate(suggestions[:3], 1):
                 speak(f"{i}. {label}")
+        intent = "unknown_command"
+        success = False
+    else:
+        print(f"Intention finale: {intent}")
         
-        return
+    keyboard_intents = ["system_control", "accessibility_control", "window_management"]
+    
+    if intent in keyboard_intents:
+        try:
+            result = process_keyboard_command(command, intent)
+            if result:
+                speak(result)
+                success = True
+                
+                # Enregistrement dans l'historique
+                COMMAND_HISTORY.append((command, intent))
+                save_history()
+                
+                return result
+            else:
+                success = False
+        except Exception as e:
+            print(f"Erreur commande clavier: {e}")
+            success = False
+            intent = "keyboard_error"
                 
     success = True
     
     try:
-        # Vérifier si c'est une commande fichiers/dossiers
-        file_keywords = [
-            'dossier', 'fichier', 'ouvre', 'ouvrir', 'crée', 'créer', 
-            'supprime', 'supprimer', 'bureau', 'documents', 'va dans', 
-            'navigue', 'affiche', 'montre', 'lis'
-        ]
-        
-        command_lower = command.lower()
+        file_keywords = ['dossier', 'fichier', 'ouvre', 'crée', 'supprime']
         
         if any(keyword in command_lower for keyword in file_keywords):
             print(f"Tentative de traitement comme commande fichier: {command}")
             
-            # Import dynamique sécurisé
             try:
-                # Vérifier si le module existe
-                import importlib
-                vocal_file_system_spec = importlib.util.find_spec("vocal_file_system")
-                
-                if vocal_file_system_spec is not None:
-                    from vocal_file_system import vocal_file_handler
-                    
-                    # Vérifier que la fonction existe
-                    if hasattr(vocal_file_handler, 'handle_command'):
-                        result = vocal_file_handler.handle_command(command)
-                        
-                        if result is not None and result != False:
-                            print(f"Commande fichiers traitée avec succès: {command}")
-                            
-                            # Enregistrement dans l'historique
-                            COMMAND_HISTORY.append((command, "file_operation"))
-                            save_history()
-                            
-                            speak("Opération sur les fichiers terminée.")
-                            return "Commande fichiers exécutée"
-                        else:
-                            print(f"La commande fichiers a retourné: {result}")
-                    else:
-                        print("Fonction handle_command non trouvée dans vocal_file_handler")
-                else:
-                    print("Module vocal_file_system non trouvé")
-                    
-            except ImportError as e:
-                print(f"Import impossible du gestionnaire fichiers: {e}")
+                from vocal_file_system import vocal_file_handler
+                if hasattr(vocal_file_handler, 'handle_command'):
+                    result = vocal_file_handler.handle_command(command)
+                    if result is not None and result != False:
+                        print(f"Commande fichiers traitée avec succès: {command}")
+                        COMMAND_HISTORY.append((command, "file_operation"))
+                        save_history()
+                        speak("Opération sur les fichiers terminée.")
+                        return "Commande fichiers exécutée"
             except Exception as e:
                 print(f"Erreur gestionnaire fichiers: {e}")
-                    
+                
+        COMMAND_HISTORY.append((command, intent))
+        save_history()
+
     except Exception as e:
-        print(f"Erreur générale dans la détection fichiers: {e}")
+        success = False
+        logging.error(f"Erreur exécution commande: {e}")
+        speak("Désolé, une erreur s'est produite.")
     
     navigation_commands = ['suivant', 'précédent', 'avant', 'prochain', 'précédent']
     
@@ -2514,6 +2985,11 @@ def process_voice_command(command, forced_intent=None):
                 set_current_search_index(new_index)
                 speak(f"Résultat {new_index + 1} sur {len(results)}")
                 return "Navigation précédente"
+    
+    if "bureau virtuel" in command.lower() or "nouveau bureau" in command.lower():
+        intent = "system_control"
+        print("Détection spécifique: bureau virtuel -> system_control")
+    
     def process_ai_feedback(command, success, start_time, command_complexity):
         """Traite le feedback pour l'IA après chaque commande"""
         global dqn_agent
@@ -2607,13 +3083,11 @@ def process_voice_command(command, forced_intent=None):
             complexity = len(original_command.split()) / 20.0
             final_reward = compute_reward(feedback_type, 0, complexity) + reward_bonus
             
-            # Mettre à jour l'agent
             action_idx = ACTIONS.index("executer_commande")
             dqn_agent.remember(dqn_agent.state, action_idx, final_reward, dqn_agent.state, True)
             
             print(f"Feedback utilisateur: humeur={user_mood:.2f}, type={feedback_type}, reward={final_reward}")
             
-            # Sauvegarder le modèle si le feedback est significatif
             if abs(reward_bonus) > 2.0:
                 dqn_agent.save_model()
                 print("Modèle IA sauvegardé après feedback important")
@@ -2637,7 +3111,7 @@ def process_voice_command(command, forced_intent=None):
             
             # Afficher dans l'interface
             if FRONT_DISPLAY_CALLBACK:
-                FRONT_DISPLAY_CALLBACK(f"💡 Suggestion IA: {suggestions['suggestion']}")
+                FRONT_DISPLAY_CALLBACK(f"Suggestion IA: {suggestions['suggestion']}")
             
             return suggestions
         return None
@@ -2714,6 +3188,13 @@ def process_voice_command(command, forced_intent=None):
                 modify_event(int(event_id), new_event)
             else:
                 speak("Veuillez préciser l'identifiant et le nouveau texte.")
+        
+        keyboard_intents = ["system_control", "accessibility_control", "window_management"]
+        
+        if intent in keyboard_intents:
+            result = process_keyboard_command(command, intent)
+            speak(result)
+            return result
         
         elif intent == "auto_search" or intent == "quick_search":
             speak("Lancement de la recherche automatique avec visualisation...")
@@ -2808,6 +3289,7 @@ def process_voice_command(command, forced_intent=None):
                     get_file_info(results[0])
             else:
                 get_file_info(results[current_index])
+            
         
         elif intent == "search_files":
             search_files_vocal()
@@ -2901,10 +3383,9 @@ def process_voice_command(command, forced_intent=None):
     if 'DQN_AVAILABLE' not in globals():
         DQN_AVAILABLE = False
     
-    
     process_ai_feedback(command, success, start_time, command_complexity)
     
-    if DQN_AVAILABLE and dqn_agent:
+    if DQN_AVAILABLE and dqn_agent and intent != "unknown_command":
         try:
             execution_time = time.time() - start_time
             current_hour = time.localtime().tm_hour / 24.0
@@ -2920,19 +3401,11 @@ def process_voice_command(command, forced_intent=None):
             dqn_agent.remember(dqn_agent.state, action_idx, reward, next_state, False)
             dqn_agent.state = next_state
             
-            if voice_prefs.get_preference("auto_feedback"):
-                speak("Est-ce que cela vous convient ?")
-                feedback_text = listen()
-                
-                if feedback_text and DQN_AVAILABLE:
-                    user_mood = analyze_user_sentiment(feedback_text)
-                    feedback_type = "positif" if user_mood > 0.6 else "negatif" if user_mood < 0.4 else "neutre"
-                    
-                    reward = compute_reward(feedback_type, execution_time, command_complexity)
-                    dqn_agent.remember(dqn_agent.state, action_idx, reward, next_state, True)
-                    
         except Exception as e:
             print(f"Erreur dans la section DQN: {e}")
+            
+    return "Commande exécutée" if success else "Erreur de commande"
+
 def check_write_permissions(self):
     try:
         test_file = "test_write.txt"

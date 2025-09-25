@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QGroupBox, QCheckBox, QTextEdit, QStackedWidget,
                              QToolButton, QMenu, QAction, QSystemTrayIcon, QStyle,
                              QDialog, QDialogButtonBox)
+
 from PyQt5.QtCore import Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve, pyqtSignal, QObject, QPoint
 from PyQt5.QtGui import QFont, QColor, QPalette, QIcon, QLinearGradient, QPainter, QPainterPath, QPixmap, QBrush, QTextCursor, QPen
 
@@ -58,12 +59,18 @@ except ImportError:
 from voice_manager import voice_manager
 from voice_preferences import voice_prefs
 
+RECOGNITION_MODE = "google"
+
 class AssistantSignals(QObject):
     show_suggestions = pyqtSignal(list, str)
     update_display = pyqtSignal(str)
     update_status = pyqtSignal(str, str, str)
     add_history_item = pyqtSignal(str, str)
     update_metrics = pyqtSignal(dict)
+    
+    wake_signal = pyqtSignal()
+    command_signal = pyqtSignal(str)
+    sleep_signal = pyqtSignal()
 
 assistant_signals = AssistantSignals()
 
@@ -246,19 +253,46 @@ class ModernButton(QPushButton):
         return color
 
 class StdoutRedirector:
+    """
+    Redirection stdout ultra-simplifiée - évite complètement QTextCursor
+    """
+    
     def __init__(self, text_widget):
         self.text_widget = text_widget
+        self.buffer = ""
         
     def write(self, text):
-        if text.strip():
-            QTimer.singleShot(0, lambda: self._append_text(text.strip()))
+        if text and text.strip():
+            self.buffer += text
+            # Utiliser QTimer pour l'ajout thread-safe SANS QTextCursor
+            QTimer.singleShot(0, self._safe_append)
+                
+    def _safe_append(self):
+        """Ajout sécurisé sans manipulation de QTextCursor"""
+        if not self.buffer.strip():
+            return
             
-    def _append_text(self, text):
-        self.text_widget.append(text)
-        self.text_widget.moveCursor(QTextCursor.End)
-        
+        try:
+            # Méthode simple avec append() natif
+            lines = self.buffer.strip().split('\n')
+            for line in lines:
+                if line.strip():
+                    timestamp = time.strftime('[%H:%M:%S]')
+                    self.text_widget.append(f"{timestamp} {line.strip()}")
+            
+            # Scroll automatique simple
+            scrollbar = self.text_widget.verticalScrollBar()
+            if scrollbar:
+                scrollbar.setValue(scrollbar.maximum())
+                
+        except Exception as e:
+            # Fallback absolu
+            print(f"FALLBACK: {self.buffer.strip()}")
+        finally:
+            self.buffer = ""
+            
     def flush(self):
-        pass
+        self._safe_append()
 
 class VirtualAssistant(QMainWindow):               
     def __init__(self):
@@ -275,9 +309,7 @@ class VirtualAssistant(QMainWindow):
             self.agent = None
             DQN_AVAILABLE = False
             print("Agent DQN non disponible")
-        
-        # self.agent = dqn_agent
-        
+                
         self.is_awake = False
         self.performance_data = []
         self.history = []
@@ -310,13 +342,18 @@ class VirtualAssistant(QMainWindow):
                     "batch_size": 32
                 }
             })()
-        # self.agent = dqn_agent
         
+        # CONNEXION DES SIGNALS CORRIGÉE
         assistant_signals.show_suggestions.connect(self.show_suggestions_safe)
         assistant_signals.update_display.connect(self.update_display_safe)
         assistant_signals.update_status.connect(self.update_status_safe)
         assistant_signals.add_history_item.connect(self.add_history_item_safe)
         assistant_signals.update_metrics.connect(self.update_metrics_safe)
+        
+        # CORRECTION : Utiliser assistant_signals au lieu de self
+        assistant_signals.wake_signal.connect(self.wake_up_assistant)
+        assistant_signals.command_signal.connect(self.process_command)
+        assistant_signals.sleep_signal.connect(self.put_to_sleep)
         
         set_front_display_callback(self.afficher_message)
         self.initUI()
@@ -390,6 +427,37 @@ class VirtualAssistant(QMainWindow):
             ("Préférences", self.show_preferences),
             ("Aide", self.show_help)
         ]
+        
+        keyboard_buttons = [
+            ("Verrouiller", lambda: self.execute_keyboard_action("verrouiller"), "#e74c3c"),
+            ("Capture", lambda: self.execute_keyboard_action("capture"), "#3498db"),
+            ("Mosaïque", lambda: self.execute_keyboard_action("mosaique"), "#9b59b6"),
+            ("Loupe +", lambda: self.execute_keyboard_action("loupe_plus"), "#f39c12"),
+            ("Snap Gauche", lambda: self.execute_keyboard_action("snap_gauche"), "#2ecc71"),
+            ("Snap Droite", lambda: self.execute_keyboard_action("snap_droite"), "#e67e22")
+        ]
+        
+        def execute_keyboard_action(self, action):
+            try:
+                from keyboard_controller import keyboard_controller
+                
+                action_map = {
+                    "verrouiller": keyboard_controller.verrouiller_ordinateur,
+                    "capture": keyboard_controller.capture_ecran,
+                    "mosaique": keyboard_controller.mosaique_fenetres,
+                    "loupe_plus": keyboard_controller.loupe_agrandir,
+                    "snap_gauche": keyboard_controller.fenetre_snap_gauche,
+                    "snap_droite": keyboard_controller.fenetre_snap_droite
+                }
+                
+                if action in action_map:
+                    result = action_map[action]()
+                    self.afficher_message(f"⌨️ {result}")
+                    speak(result)
+                else:
+                    self.afficher_message(f"Action '{action}' non reconnue")
+            except Exception as e:
+                self.afficher_message(f"Erreur action clavier: {e}")
         
         for text, callback in nav_buttons:
             btn = QPushButton(text)
@@ -472,6 +540,29 @@ class VirtualAssistant(QMainWindow):
         header_layout.addSpacing(15)
         header_layout.addLayout(status_info)
         header_layout.addStretch()
+        
+        self.recognition_label = QLabel("Mode: Auto-détection")
+        self.recognition_label.setStyleSheet("color: #7f8c8d; font-size: 10px;")
+        header_layout.addWidget(self.recognition_label)
+        
+        self.recognition_switch = QPushButton("Mode Hors-ligne")
+        self.recognition_switch.setStyleSheet("""
+            QPushButton {
+                background: #95a5a6;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+            QPushButton:hover {
+                background: #7f8c8d;
+            }
+        """)
+        self.recognition_switch.clicked.connect(self.toggle_recognition_mode)
+        header_layout.addWidget(self.recognition_switch)
+        
+        header_layout.addSpacing(10)
         
         self.wake_button = ModernButton("Activer l'écoute", "#27ae60")
         self.wake_button.clicked.connect(self.toggle_listening)
@@ -773,6 +864,21 @@ class VirtualAssistant(QMainWindow):
         self.central_stack.addWidget(self.voice_config_widget)
 
         self.central_stack.setCurrentWidget(self.dashboard_widget)
+        
+    def toggle_recognition_mode(self):
+        """Bascule entre Google et Vosk"""
+        global RECOGNITION_MODE
+        
+        if RECOGNITION_MODE == "google":
+            RECOGNITION_MODE = "vosk"
+            self.recognition_label.setText("Mode: Hors-ligne (Vosk)")
+            self.recognition_switch.setText("Mode En-ligne")
+            self.afficher_message("Reconnaissance vocale basculée en mode hors-ligne")
+        else:
+            RECOGNITION_MODE = "google" 
+            self.recognition_label.setText("Mode: En-ligne (Google)")
+            self.recognition_switch.setText("Mode Hors-ligne")
+            self.afficher_message("Reconnaissance vocale basculée en mode en-ligne")
 
     def toggle_listening(self):
         """Active ou désactive l'écoute"""
@@ -781,7 +887,7 @@ class VirtualAssistant(QMainWindow):
         else:
             self.put_to_sleep()
 
-    def call_intent_command(intent, command_text=None):
+    def call_intent_command(self, intent, command_text=None):
         """
         Appelle directement la commande correspondant à une intention.
         Si command_text est fourni, il est utilisé comme paramètre.
@@ -905,24 +1011,57 @@ class VirtualAssistant(QMainWindow):
             print(f"Erreur mise à jour métriques: {e}")
 
     def listen_loop(self):
-        """Boucle d'écoute principale"""
+        """Boucle d'écoute corrigée pour les threads Qt"""
+        import speech_recognition as sr
+        
+        # Créer un recognizer local pour ce thread
+        recognizer = sr.Recognizer()
+        
         while True:
             try:
-                self.check_automation()  # Ajout ici
                 if not self.is_awake:
-                    text = listen(timeout=1)
-                    if text and any(word in text.lower() for word in voice_prefs.get_preference("wake_words")):
-                        self.wake_up_assistant()
+                    # Écoute courte pour les mots de réveil
+                    text = self.safe_listen(recognizer, timeout=2)
+                    if text and any(word in text.lower() for word in ["assistant", "réveille"]):
+                        # CORRECTION : Utiliser assistant_signals au lieu de self
+                        assistant_signals.wake_signal.emit()
                         time.sleep(2)
                 else:
-                    text = listen(timeout=3)
+                    # Écoute normale
+                    text = self.safe_listen(recognizer, timeout=5)
                     if text:
-                        self.process_command(text)
-                        if any(word in text.lower() for word in voice_prefs.get_preference("sleep_words")):
-                            self.put_to_sleep()
+                        # CORRECTION : Utiliser assistant_signals au lieu de self
+                        assistant_signals.command_signal.emit(text)
+                        
+                        if any(word in text.lower() for word in ["dors", "veille"]):
+                            assistant_signals.sleep_signal.emit()
+                            
             except Exception as e:
                 print(f"Erreur écoute: {e}")
                 time.sleep(1)
+
+    def safe_listen(self, recognizer, timeout=5):
+        """Écoute sécurisée avec gestion d'erreurs"""
+        try:
+            with sr.Microphone() as source:
+                recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                audio = recognizer.listen(source, timeout=timeout, phrase_time_limit=5)
+                
+                from ag7voc import RECOGNITION_MODE
+                if RECOGNITION_MODE == "google":
+                    text = recognizer.recognize_google(audio, language="fr-FR")
+                else:
+                    # Fallback simple sans Vosk complexe
+                    text = recognizer.recognize_google(audio, language="fr-FR")
+                    
+                return text
+        except sr.WaitTimeoutError:
+            return None
+        except sr.UnknownValueError:
+            return None
+        except Exception as e:
+            print(f"Erreur écoute: {e}")
+            return None
 
     def process_command(self, text):
         try:
@@ -951,12 +1090,19 @@ class VirtualAssistant(QMainWindow):
             self.last_command_success = 0.1
 
     def afficher_message(self, message):
-        """Affiche un message dans le journal"""
+        """Affiche un message sans QTextCursor complexe"""
         try:
-            timestamp = time.strftime('%H:%M:%S')
-            formatted_message = f"[{timestamp}] {message}"
+            timestamp = time.strftime('[%H:%M:%S]')
+            formatted_message = f"{timestamp} {message}"
+            
+            # Méthode directe et sûre
             self.output_text.append(formatted_message)
-            self.output_text.moveCursor(QTextCursor.End)
+            
+            # Scroll automatique
+            scrollbar = self.output_text.verticalScrollBar()
+            if scrollbar:
+                scrollbar.setValue(scrollbar.maximum())
+                
         except Exception as e:
             print(f"Erreur affichage message: {e}")
 
@@ -1152,11 +1298,6 @@ class VirtualAssistant(QMainWindow):
         super().closeEvent(event)
         
     def check_automation(self):
-        """
-        Propose des routines automatiques selon l'historique :
-        Si une commande A est souvent suivie d'une commande B,
-        alors après A, l'assistant propose automatiquement B.
-        """
         """Propose des routines automatiques selon l'historique"""
         try:
             if not os.path.exists("history.json"):
@@ -1170,10 +1311,13 @@ class VirtualAssistant(QMainWindow):
 
             sequence_counts = {}
             for i in range(len(history) - 1):
+                # CORRECTION : Vérifier que l'élément a assez d'éléments
                 if len(history[i]) >= 2 and len(history[i + 1]) >= 2:
                     cmd_a, intent_a = history[i][0], history[i][1]
                     cmd_b, intent_b = history[i + 1][0], history[i + 1][1]
-                    if intent_a and intent_b:
+                    
+                    # CORRECTION : Ignorer les intentions None ou vides
+                    if intent_a and intent_b and intent_a != "unknown_command":
                         key = (intent_a, intent_b)
                         sequence_counts[key] = sequence_counts.get(key, 0) + 1
 
@@ -1182,9 +1326,10 @@ class VirtualAssistant(QMainWindow):
                 from ag7voc import get_intent_spacy_similarity
                 last_intent = get_intent_spacy_similarity(last_cmd)
                 
-                if last_intent:
+                # CORRECTION : Vérifier que last_intent est valide
+                if last_intent and last_intent != "unknown_command":
                     candidates = [(b, count) for (a, b), count in sequence_counts.items() 
-                                if a == last_intent and b]
+                                if a == last_intent and b and b != "unknown_command"]
                     
                     if candidates:
                         next_intent, _ = max(candidates, key=lambda x: x[1])
@@ -1199,13 +1344,6 @@ class VirtualAssistant(QMainWindow):
                         self.afficher_message(f"Suggestion IA : Voulez-vous exécuter '{label_fr}' ?")
                         speak(f"Voulez-vous que je lance : {label_fr} ?")
                         
-                        answer = listen(timeout=5)
-                        if answer and "oui" in answer.lower():
-                            from utils import call_intent_command
-                            result = call_intent_command(next_intent)
-                            if result:
-                                self.afficher_message(f"Résultat: {result}")
-                                
         except Exception as e:
             print(f"Erreur analyse automatisation : {e}")
 

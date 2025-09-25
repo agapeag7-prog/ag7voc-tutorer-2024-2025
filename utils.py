@@ -3,7 +3,7 @@ def call_intent_command(intent, command_text=None):
         read_file, write_file, delete_file, create_folder, list_files,
         rename_file, move_file, show_events, add_event, delete_event, modify_event,
         get_system_info, launch_app, shutdown_computer, restart_computer, lock_computer,
-        search_web, send_email, show_help, process_voice_command
+        search_web, send_email, show_help, process_voice_command, search_files
     )
 
     intent_map = {
@@ -28,12 +28,13 @@ def call_intent_command(intent, command_text=None):
         "search_web": lambda: search_web(command_text or ""),
         "send_email": lambda: send_email(command_text or ""),
         "system_info": get_system_info,
+        "search_files": search_files,
     }
 
     func = intent_map.get(intent)
     if func:
         try:
-            if intent in ["write_file", "add_event", "delete_event", "modify_event", "search_web", "send_email", "launch_app"]:
+            if intent in ["write_file", "add_event", "delete_event", "modify_event", "search_web", "send_email", "launch_app", "search_files"]:
                 return func(command_text)
             else:
                 return func()

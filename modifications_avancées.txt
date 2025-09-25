@@ -1,0 +1,289 @@
+1. Contrôle système global
+Verrouillage sécurisé de l'ordinateur
+
+Minimisation/restauration de toutes les fenêtres
+
+Navigation entre applications (Alt+Tab)
+
+Accès au menu Démarrer et recherche Windows
+
+Gestion du bureau virtuel (création/suppression/navigation)
+
+Capture d'écran et outil de capture
+
+Ouverture du gestionnaire de tâches
+
+Accès aux paramètres système rapides
+
+Contrôle de la luminosité de l'écran
+
+Gestion de l'alimentation (veille/hibernation)
+
+2. Automatisation bureautique complète
+Navigateur web
+Ouverture/fermeture d'onglets
+
+Navigation avant/arrière
+
+Actualisation des pages
+
+Recherche dans la page
+
+Gestion des favoris (ajouter/ouvrir)
+
+Mode plein écran
+
+Impression de pages
+
+Historique de navigation
+
+Téléchargements
+
+DevTools (F12)
+
+Applications Office
+Sauvegarde automatique de documents
+
+Copier/coller/couper avancé
+
+Annulation/rétablissement multiple
+
+Recherche/remplacement de texte
+
+Formatage texte (gras, italique, souligné)
+
+Alignement et mise en page
+
+Insertion d'objets
+
+Révision et commentaires
+
+Protection de documents
+
+Contrôle média universel
+Lecture/pause média
+
+Piste suivante/précédente
+
+Contrôle du volume (augmenter/diminuer/muet)
+
+Avance/retour rapide
+
+Lancement du lecteur média par défaut
+
+Sous-titres et langues audio
+
+Playlists et bibliothèques
+
+3. Macros et séquences complexes
+Configuration d'environnements de travail personnalisés
+
+Ouverture simultanée de plusieurs applications
+
+Pré-remplissage de formulaires répétitifs
+
+Séquences de fermeture sécurisée
+
+Backup automatique de fichiers ouverts
+
+Scripts de nettoyage de session
+
+Profils utilisateur (travail/maison/jeu)
+
+Templates de projets
+
+4. Saisie vocale intelligente
+Saisie de texte avec formatage automatique
+
+Correction orthographique assistée
+
+Complétion de phrases courantes
+
+Insertion de modèles de documents
+
+Remplissage de champs structurés
+
+Saisie de données tabulaires
+
+Dictée vocale améliorée
+
+Traduction rapide
+
+5. Surveillance et interaction avancée
+Enregistrement de séquences de touches pour reproduction
+
+Création de raccourcis personnalisés vocaux
+
+Détection de combinaisons de touches spécifiques
+
+Macro conditionnelle selon l'application active
+
+Profils de clavier selon le contexte
+
+Monitoring d'activité clavier
+
+Alertes de sécurité
+
+6. Fonctionnalités de sécurité (À INTÉGRER)
+Verrouillage d'urgence par commande vocale
+
+Saisie sécurisée de mots de passe (anti-keylogger)
+
+Masquage automatique d'applications sensibles
+
+Clean-up rapide de session
+
+Logout automatique en cas d'absence
+
+Chiffrement temporaire de fichiers
+
+Nettoyage de presse-papiers sensible
+
+7. Accessibilité améliorée
+Navigation au clavier purement vocale
+
+Commandes mains libres pour utilisateurs handicapés
+
+Contrôle de la souris par clavier (tabulation)
+
+Agrandissement/réduction d'écran
+
+Inversion des couleurs
+
+Lecture de texte sélectionné
+
+Guide vocal interactif
+
+Mode haute visibilité
+
+8. Gestion de fenêtres avancée
+Redimensionnement/positionnement précis
+
+Mise en mosaïque automatique
+
+Basculer entre fenêtres spécifiques
+
+Gestion des écrans multiples
+
+Mode toujours au premier plan
+
+Transparence et opacité
+
+Organisation spatiale
+
+Snap assisté
+
+9. Productivité avancée
+Recherche instantanée dans tous les documents
+
+Lancement rapide d'applications favorites
+
+Gestion des presse-papiers multiples
+
+Timers et rappels intégrés
+
+Automatisation de tâches planifiées
+
+Workflows personnalisés
+
+Statistiques d'utilisation
+
+Optimisation du temps
+
+10. Gaming et divertissement
+Commandes de jeu mains libres
+
+Macro de jeu complexes
+
+Contrôle média pendant le gaming
+
+Screenshots et enregistrement
+
+Optimisation système pour gaming
+
+Mode streamer intégré
+
+Overlay vocal
+
+Commandes rapides jeux spécifiques
+
+11. Développement et programmation
+Raccourcis IDE personnalisés
+
+Saisie de code patterns répétitifs
+
+Debugging assisté
+
+Navigation dans le code
+
+Compilation/lancement rapide
+
+Gestion de version
+
+Tests automatisés
+
+Documentation automatique
+
+12. Communication et collaboration
+Réponses automatiques prédéfinies
+
+Formatage de emails rapide
+
+Partage d'écran simplifié
+
+Annotation d'écran vocale
+
+Enregistrement de réunions
+
+Transcription en temps réel
+
+Intégration Teams/Zoom
+
+Gestion de webinaire
+
+13. Gestion fichiers avancée
+Renommage batch vocal
+
+Organisation automatique de dossiers
+
+Compression/décompression rapide
+
+Recherche approfondie de fichiers
+
+Métadonnées et propriétés
+
+Conversion de format
+
+Synchronisation cloud
+
+Backup vocal
+
+14. Réseau et connectivité
+Connexion/déconnexion réseaux
+
+Partage de fichiers rapide
+
+Diagnostic réseau
+
+VPN et sécurité
+
+Contrôle Bluetooth
+
+Gestion imprimantes
+
+Streaming réseau
+
+15. Personnalisation système
+Thèmes et apparences
+
+Sons et notifications
+
+économiseur d'écran
+
+Paramètres régionaux
+
+Langues et claviers
+
+Curseurs et polices
+
+Effets visuels
