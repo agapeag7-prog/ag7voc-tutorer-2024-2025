@@ -54,8 +54,6 @@ import threading
 from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgressBar, QTextEdit
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QObject
 
-# from vocal_file_explorer import VocalFileExplorer
-
 from vocal_file_system import vocal_file_handler
 
 try:
@@ -3206,7 +3204,6 @@ def auto_offer_actions(results):
     is_dir = os.path.isdir(first_result)
     result_type = "dossier" if is_dir else "fichier"
     
-    # Message vocal automatique
     if len(results) == 1:
         speak(f"J'ai trouvé un {result_type}. Ouverture automatique...")
         open_file_default(first_result)
@@ -3214,16 +3211,13 @@ def auto_offer_actions(results):
         speak(f"J'ai trouvé {len(results)} résultats. Ouverture du premier...")
         open_file_default(first_result)
         
-        # Proposer la navigation si peu de résultats
         QTimer.singleShot(3000, lambda: speak(
             f"Vous pouvez dire 'suivant' pour voir le résultat suivant sur {len(results)}."))
     else:
         speak(f"J'ai trouvé {len(results)} résultats. Les résultats ont été ouverts dans l'explorateur.")
         
-        # Proposer des actions avancées
         QTimer.singleShot(3000, lambda: speak(
             "Dites 'filtrer' pour affiner la recherche, ou 'premier' pour ouvrir le premier résultat."))
-
 
 def try_interpret_path(spoken_path):
     """Essaye d'interpréter un chemin parlé"""

@@ -818,5 +818,45 @@
   [
     "ouvre calculatrice",
     "launch_app"
+  ],
+  [
+    "renommer et fichiers",
+    "list_files"
+  ],
+  [
+    "ouvre Oued",
+    "launch_app"
+  ],
+  [
+    "ouvre le dossier bureau",
+    "file_operation"
+  ],
+  [
+    "cherche les fichiers raccourci",
+    "list_files"
+  ],
+  [
+    "déplacer un fichier",
+    "add_event"
+  ],
+  [
+    "the place fichiers",
+    "search_files"
+  ],
+  [
+    "envoie mail",
+    "send_email"
+  ],
+  [
+    "envoie mail",
+    "send_email"
+  ],
+  [
+    "informations système",
+    "system_info"
+  ],
+  [
+    "informations système",
+    "system_info"
   ]
 ]

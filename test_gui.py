@@ -28,13 +28,32 @@ from matplotlib.figure import Figure
 
 
 try:
-    from ai_engine import dqn_agent
+    from ai_engine import dqn_agent, DQNAgent
+    DQN_AVAILABLE = True
 except ImportError:
     class DQNAgent:
-        def __init__(self):
+        def __init__(self, state_size=5, action_size=6):
             self.memory = []
             self.epsilon = 1.0
+            self.state_size = state_size
+            self.action_size = action_size
+            
+        def remember(self, *args):
+            pass
+            
+        def replay(self, batch_size):
+            return random.uniform(0.1, 0.5)
+            
+        def get_training_metrics(self):
+            return {
+                "memory_size": len(self.memory),
+                "epsilon": self.epsilon,
+                "exploration_rate": f"{self.epsilon * 100:.1f}%",
+                "batch_size": 32
+            }
+    
     dqn_agent = DQNAgent()
+    DQN_AVAILABLE = False
 
 from voice_manager import voice_manager
 from voice_preferences import voice_prefs
@@ -256,7 +275,8 @@ class VirtualAssistant(QMainWindow):
             self.agent = None
             DQN_AVAILABLE = False
             print("Agent DQN non disponible")
-        self.agent = dqn_agent
+        
+        # self.agent = dqn_agent
         
         self.is_awake = False
         self.performance_data = []
@@ -265,7 +285,32 @@ class VirtualAssistant(QMainWindow):
         self.batch_size = 32
         self.is_listening = False
         
-        self.agent = dqn_agent
+        self.agent = None
+        self.DQN_AVAILABLE = False
+        
+        try:
+            from ai_engine import dqn_agent
+            if dqn_agent and hasattr(dqn_agent, 'remember'):
+                self.agent = dqn_agent
+                self.DQN_AVAILABLE = True
+                print(f"Agent DQN initialisé: {len(self.agent.memory)} expériences")
+            else:
+                raise AttributeError("Agent DQN incomplet")
+        except (ImportError, AttributeError) as e:
+            print(f"Agent DQN non disponible: {e}")
+            self.agent = type('MockAgent', (), {
+                'memory': [],
+                'epsilon': 1.0,
+                'remember': lambda *args: None,
+                'replay': lambda batch_size: None,
+                'get_training_metrics': lambda: {
+                    "memory_size": 0,
+                    "epsilon": 1.0,
+                    "exploration_rate": "100.0%",
+                    "batch_size": 32
+                }
+            })()
+        # self.agent = dqn_agent
         
         assistant_signals.show_suggestions.connect(self.show_suggestions_safe)
         assistant_signals.update_display.connect(self.update_display_safe)
@@ -1094,48 +1139,76 @@ class VirtualAssistant(QMainWindow):
         if hasattr(self, "stats_widget"):
             self.stats_widget.update_stats_labels(metrics)
 
+    def cleanup_resources(self):
+        """Nettoyer les ressources pour éviter les fuites mémoire"""
+        if hasattr(self, 'metrics_timer'):
+            self.metrics_timer.stop()
+        if hasattr(self, 'status_timer'):
+            self.status_timer.stop()
+
+    def closeEvent(self, event):
+        """Surcharger la fermeture pour nettoyer les ressources"""
+        self.cleanup_resources()
+        super().closeEvent(event)
+        
     def check_automation(self):
         """
         Propose des routines automatiques selon l'historique :
         Si une commande A est souvent suivie d'une commande B,
         alors après A, l'assistant propose automatiquement B.
         """
+        """Propose des routines automatiques selon l'historique"""
         try:
+            if not os.path.exists("history.json"):
+                return
+                
             with open("history.json", "r", encoding="utf-8") as f:
                 history = json.load(f)
+                
             if len(history) < 2:
                 return
 
             sequence_counts = {}
             for i in range(len(history) - 1):
-                cmd_a, intent_a = history[i]
-                cmd_b, intent_b = history[i + 1]
-                key = (intent_a, intent_b)
-                sequence_counts[key] = sequence_counts.get(key, 0) + 1
+                if len(history[i]) >= 2 and len(history[i + 1]) >= 2:
+                    cmd_a, intent_a = history[i][0], history[i][1]
+                    cmd_b, intent_b = history[i + 1][0], history[i + 1][1]
+                    if intent_a and intent_b:
+                        key = (intent_a, intent_b)
+                        sequence_counts[key] = sequence_counts.get(key, 0) + 1
 
-            if self.history:
+            if self.history and sequence_counts:
                 last_cmd = self.history[-1]
                 from ag7voc import get_intent_spacy_similarity
                 last_intent = get_intent_spacy_similarity(last_cmd)
-                candidates = [(b, count) for (a, b), count in sequence_counts.items() if a == last_intent]
-                if candidates:
-                    next_intent, _ = max(candidates, key=lambda x: x[1])
-                    if self.last_suggested_intent == next_intent:
-                        return
-                    self.last_suggested_intent = next_intent
-                    from ag7voc import INTENT_LABELS_FR
-                    label_fr = INTENT_LABELS_FR.get(next_intent, next_intent)
-                    self.afficher_message(f"Suggestion IA : Après cette commande, vous exécutez souvent '{label_fr}'. Voulez-vous la lancer ?")
-                    speak(f"Voulez-vous que je lance la commande suivante : {label_fr} ?")
-                    answer = listen(timeout=5)
-                    if answer and "oui" in answer.lower():
-                        if next_intent not in ["shutdown", "restart"]:
-                            self.call_intent_command(next_intent)
-                        else:
-                            self.afficher_message("Action critique non exécutée automatiquement.")
+                
+                if last_intent:
+                    candidates = [(b, count) for (a, b), count in sequence_counts.items() 
+                                if a == last_intent and b]
+                    
+                    if candidates:
+                        next_intent, _ = max(candidates, key=lambda x: x[1])
+                        
+                        if hasattr(self, 'last_suggested_intent') and self.last_suggested_intent == next_intent:
+                            return
+                            
+                        self.last_suggested_intent = next_intent
+                        from ag7voc import INTENT_LABELS_FR
+                        label_fr = INTENT_LABELS_FR.get(next_intent, next_intent)
+                        
+                        self.afficher_message(f"Suggestion IA : Voulez-vous exécuter '{label_fr}' ?")
+                        speak(f"Voulez-vous que je lance : {label_fr} ?")
+                        
+                        answer = listen(timeout=5)
+                        if answer and "oui" in answer.lower():
+                            from utils import call_intent_command
+                            result = call_intent_command(next_intent)
+                            if result:
+                                self.afficher_message(f"Résultat: {result}")
+                                
         except Exception as e:
             print(f"Erreur analyse automatisation : {e}")
-    
+
 def get_command_suggestions(command, top_n=3):
     """Simule les suggestions de commandes"""
     suggestions = [
@@ -1256,7 +1329,7 @@ class VoiceConfigWidget(QWidget):
             selected_voice_id = voice_combo.currentData()
             voice_manager.tts_engine.setProperty('voice', selected_voice_id)
             voice_manager.setup_voice_settings()
-            # Préférences
+            
             voice_prefs.preferences["voice_speed"] = speed_slider.value()
             voice_prefs.preferences["voice_volume"] = volume_slider.value() / 100
             voice_prefs.preferences["voice_id"] = selected_voice_id
@@ -1279,7 +1352,6 @@ class VoiceConfigWidget(QWidget):
 
         def save_config():
             update_voice_settings()
-            # Sauvegarde dans le fichier JSON
             try:
                 import json
                 with open("voice_preferences.json", "w", encoding="utf-8") as f:
